@@ -1,9 +1,11 @@
 from django.http import HttpResponse, HttpResponseNotFound, Http404, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import QueryDict
 from django.urls import reverse
 from django.template.loader import render_to_string
 
-
+from toolkit.models import TrafficLightObjects
+from toolkit.my_lib import sdp_func_lib, django_lib
 
 menu = [{'title': 'О сайте', 'url_name': 'about'},
         {'title': 'Возможности', 'url_name': 'options'},
@@ -11,23 +13,42 @@ menu = [{'title': 'О сайте', 'url_name': 'about'},
         {'title': 'Вход', 'url_name': 'login'},
        ]
 
+# data_db = [
+#     {'id': 1, 'title': 'Управление по SNMP', 'is_published': True},
+#     {'id': 2, 'title': 'Фильтр SNMP', 'is_published': True},
+#     {'id': 3, 'title': 'Расчет цикла и сдвигов', 'is_published': True},
+#     {'id': 4, 'title': 'Расчет конфликтов', 'is_published': True},
+# ]
+
+
 data_db = [
-    {'id': 1, 'title': 'Управление по SNMP', 'is_published': True},
-    {'id': 2, 'title': 'Фильтр SNMP', 'is_published': True},
-    {'id': 3, 'title': 'Расчет цикла и сдвигов', 'is_published': True},
-    {'id': 4, 'title': 'Расчет конфликтов', 'is_published': True},
+    {'id': 1, 'title': 'Управление по SNMP', 'url_name': 'manage_snmp'},
+    {'id': 2, 'title': 'Фильтр SNMP', 'url_name': 'filter_snmp'},
+    {'id': 3, 'title': 'Расчет цикла и сдвигов', 'url_name': 'calc_cyc'},
+    {'id': 4, 'title': 'Расчет конфликтов', 'url_name': 'calc_conflicts'},
 ]
 
 data_db2 = ['Управление по SNMP', 'Фильтр SNMP',
             'Расчет цикла и сдвигов', 'Расчет конфликтов'
 ]
 
+# controller_types_db = [
+#     {'id': 1, 'name': 'Swarco'},
+#     {'id': 2, 'name': 'Peek'},
+#     {'id': 3, 'name': 'Поток S'},
+#     {'id': 4, 'name': 'Поток'}
+# ]
+
+controller_types_db = ['Swarco', 'Peek', 'Поток S', 'Поток']
+
+
 def index(request):
 
     data = {'title': 'Главная страница',
             'menu': menu,
             'menu2': data_db2,
-            'posts': data_db
+            'posts': data_db,
+            'controllers': controller_types_db,
            }
     return render(request, 'toolkit/index.html', context=data)
 
@@ -35,12 +56,8 @@ def about(request):
     return render(request, 'toolkit/about.html', {'title': 'О сайте', 'menu': menu})
 
 def manage_snmp(request):
-    data = {'title': 'Управление по SNMP',
-            'menu': menu,
-            'menu2': data_db2,
-            'posts': data_db
-           }
-    return render(request, 'toolkit/manage_snmp.html', context=data)
+
+    return render(request, 'toolkit/manage_snmp.html',)
 
 
 def contact(request):
@@ -54,7 +71,31 @@ def options(request):
 
 def show_tab(request, post_id):
     print('1')
-    return HttpResponse(f'Отображение вкладки с id = {post_id}')
+    controller = get_object_or_404(TrafficLightObjects, pk=post_id)
+
+
+    data = {
+        'num_CO': controller.ip_adress,
+        'menu': menu,
+        'controller': controller,
+        'cat_selected': 1,
+
+    }
+
+    return render(request, 'toolkit/about_controller.html', context=data)
+
+
+    # return HttpResponse(f'Отображение вкладки с id = {post_id}')
+
+
+def calc_cyc(request):
+    print('calc_cyc')
+    return HttpResponse(request, 'toolkit/calc_cyc.html')
+
+def calc_conflicts(request):
+    print('calc_conflicts')
+    data = {'title': 'Расчёт конфликтов', 'menu': menu}
+    return render(request, 'toolkit/calc_conflicts.html', context=data)
 
 
 
@@ -78,3 +119,49 @@ def show_tab(request, post_id):
 
 def page_not_found(request, exception):
     return HttpResponseNotFound("<h1> Страница не найдена </h1>")
+
+def data_for_calc_conflicts(request):
+
+    table_name = 'table_stages'
+    query = request.GET
+
+    if not sdp_func_lib.check_query(query, table_name):
+        print(f'table_stages: {query.get(table_name)}')
+        return render(request, 'toolkit/calc_conflicts.html', context={'matrix': False})
+
+
+
+    print(f'req_GET: {query.get(table_name).strip()}')
+    data_from_table_stages = query.get(table_name).split('\n')
+    print(f'req_GET: {data_from_table_stages}')
+
+    stages = []
+    for num, line in enumerate(data_from_table_stages):
+        if ':' in data_from_table_stages:
+            processed_line = line.replace("\r", '').split(':')[1]
+        else:
+            processed_line = line.replace("\r", '')
+
+        processed_line = processed_line.split(',')
+
+        print(f'processed_line: {processed_line}')
+        stages.append(processed_line)
+
+
+    print(data_from_table_stages)
+    print(stages)
+
+
+
+    result = sdp_func_lib.calculate_conflicts(
+            stages=stages,
+)
+
+    data = {
+        'values': ('| K|', '| O|'),
+        'matrix': result,
+        'title': 'Расчёт концликтов'
+    }
+
+
+    return render(request, 'toolkit/calc_conflicts.html', context=data)
