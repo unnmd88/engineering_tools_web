@@ -7,11 +7,18 @@ register_converter(converters.FourDigitYearConverter, "year4")
 urlpatterns = [
     path('', views.index, name='home'),
     path('about/', views.about, name='about'),
-    path("manage_snmp/", views.manage_snmp, name='manage_snmp'),
     path("login/", views.login, name='login'),
     path("contact/", views.contact, name='contact'),
     path("options/", views.options, name='options'),
-    path("post/<int:post_id>/", views.show_tab, name='post'),
+    path("about_controller/<int:post_id>/", views.show_tab, name='about_controller'),
+
+    path("manage_snmp/", views.manage_snmp, name='manage_snmp'),
+    # path("filter_snmp/", views.filter_snmp, name='filter_snmp'),
+    path("calc_cyc/", views.calc_cyc, name='calc_cyc'),
+
+    path("calc_conflicts/", views.data_for_calc_conflicts, name='calc_conflicts'),
+
+
 
 
 
