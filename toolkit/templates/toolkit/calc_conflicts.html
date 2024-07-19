@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+Пример расчета конфликтов##
+<p> Фазы-направления </p>
+<form>
+    <textarea rows="8" name="table_stages"></textarea>
+    <p></p>
+    <button type="submit"> Отправить </button>
+</form>
+
+
+
+<!--<table border="1" bgcolor="pink" cellpadding="8" cellspacing="4">-->
+<!--    {% for line in matrix %}-->
+<!--    <tr> <td> {{ line|join:' ' }} </td> </tr>-->
+
+<!--    {% endfor %}-->
+
+
+<!--</table>-->
+
+
+<table border="1" bgcolor="#C0C0C0" cellpadding="8" cellspacing="4">
+    {% for line in matrix %}
+        {% if forloop.first%}
+    <tr>
+            {% for el in line %}
+             <th>{{ el }}</th>
+            {% endfor %}
+    </tr>
+        {% else %}
+            <tr>
+            {% for el in line %}
+                {% if forloop.first %}
+                    <td> <b> {{ el }} </b> </td>
+                {% elif el == values.0 %}
+                <td align="center"> <span style="color:red">{{ el }}</span> </td>
+                {% elif el == values.1 %}
+                <td align="center"> <span style="color:green">{{ el }}</span> </td>
+                {% else %}
+                        <td align="center">{{ el }}</td>
+                {% endif %}
+            {% endfor %}
+                </tr>
+        {% endif %}
+    {% endfor %}
+</table>
+
+
+
+
+{% endblock %}

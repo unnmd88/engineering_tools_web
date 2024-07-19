@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<ul>
+    <li><a href="{% url 'manage_snmp'%}">Управление SNMP</a></li>
+<!--    <li><a href="{% url 'manage_snmp'%}">Фильтр SNMP</a></li>-->
+    <li><a href="{% url 'calc_cyc'%}">Расчёт Тцикла</a></li>
+    <li><a href="{% url 'calc_conflicts'%}">Расчёт конфликтов</a></li>
+</ul>
+{% endblock %}
+
+
+
+
