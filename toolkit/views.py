@@ -127,7 +127,7 @@ def data_for_calc_conflicts(request):
 
     if not sdp_func_lib.check_query(query, table_name):
         print(f'table_stages: {query.get(table_name)}')
-        return render(request, 'toolkit/calc_conflicts.html', context={'matrix': False})
+        return render(request, 'toolkit/calc_conflicts.html', context={'render_conflicts_data': False})
 
 
 
@@ -137,7 +137,7 @@ def data_for_calc_conflicts(request):
 
     stages = []
     for num, line in enumerate(data_from_table_stages):
-        if ':' in data_from_table_stages:
+        if ':' in line:
             processed_line = line.replace("\r", '').split(':')[1]
         else:
             processed_line = line.replace("\r", '')
@@ -151,16 +151,38 @@ def data_for_calc_conflicts(request):
     print(data_from_table_stages)
     print(stages)
 
-
-
-    result = sdp_func_lib.calculate_conflicts(
+    sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, binary_val_swarco_for_write_PTC2, \
+        binary_val_swarco_F009 = sdp_func_lib.calculate_conflicts(
             stages=stages,
+            controller_type='swarco',
+            add_conflicts_and_binval_calcConflicts=True
 )
 
+
+    print(f'sorted_stages: {sorted_stages}')
+    print(f'kolichestvo_napr: {kolichestvo_napr}')
+    print(f'matrix_output: {matrix_output}')
+    print(f'matrix_swarco_F997: {matrix_swarco_F997}')
+    print(f'binary_val_swarco_for_write_PTC2: {binary_val_swarco_for_write_PTC2}')
+    print(f'binary_val_swarco_F009: {binary_val_swarco_F009}')
+
+
+
+
+#     result = sdp_func_lib.calculate_conflicts(
+#             stages=stages,
+# )
+
     data = {
+        'title': 'Расчёт концликтов',
+        'render_conflicts_data': True,
         'values': ('| K|', '| O|'),
-        'matrix': result,
-        'title': 'Расчёт концликтов'
+        'matrix': matrix_output,
+        'sorted_stages': sorted_stages,
+        'kolichestvo_napr': kolichestvo_napr,
+        'matrix_swarco_F997': matrix_swarco_F997
+
+
     }
 
 
