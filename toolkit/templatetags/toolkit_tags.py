@@ -6,10 +6,10 @@ register = template.Library()
 
 @register.simple_tag()
 def get_controller_types():
-    return views.controller_types_db
+    return views.controllers_menu
 
 
 @register.inclusion_tag('toolkit/controller_types.html')
 def show_controllers():
-    types = views.controller_types_db
+    types = views.controllers_menu
     return {'types': types}

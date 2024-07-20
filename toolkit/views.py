@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseNotFound, Http404, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseNotFound, Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import QueryDict
 from django.urls import reverse
@@ -7,7 +7,9 @@ from django.template.loader import render_to_string
 from toolkit.models import TrafficLightObjects
 from toolkit.my_lib import sdp_func_lib, django_lib
 
-menu = [{'title': 'О сайте', 'url_name': 'about'},
+menu_header = [
+        {'title': 'Главная страница', 'url_name': 'home'},
+        {'title': 'О сайте', 'url_name': 'about'},
         {'title': 'Возможности', 'url_name': 'options'},
         {'title': 'Обратная связь', 'url_name': 'contact'},
         {'title': 'Вход', 'url_name': 'login'},
@@ -21,9 +23,8 @@ menu = [{'title': 'О сайте', 'url_name': 'about'},
 # ]
 
 
-data_db = [
+menu_common = [
     {'id': 1, 'title': 'Управление по SNMP', 'url_name': 'manage_snmp'},
-    {'id': 2, 'title': 'Фильтр SNMP', 'url_name': 'filter_snmp'},
     {'id': 3, 'title': 'Расчет цикла и сдвигов', 'url_name': 'calc_cyc'},
     {'id': 4, 'title': 'Расчет конфликтов', 'url_name': 'calc_conflicts'},
 ]
@@ -39,25 +40,36 @@ data_db2 = ['Управление по SNMP', 'Фильтр SNMP',
 #     {'id': 4, 'name': 'Поток'}
 # ]
 
-controller_types_db = ['Swarco', 'Peek', 'Поток S', 'Поток']
+controllers_menu = [
+    {'id': 1, 'title': 'Swarco', 'url_name': 'swarco'},
+    {'id': 3, 'title': 'Peek', 'url_name': 'peek'},
+    {'id': 4, 'title': 'Поток', 'url_name': 'potok'},
+]
+
+
+
+def my_python_function ( request ): # Ваш код Python здесь
+    response_data = {'message' : 'Функция Python вызвана успешно!'}
+    print(response_data)
+    return JsonResponse (response_data)
 
 
 def index(request):
 
     data = {'title': 'Главная страница',
-            'menu': menu,
+            'menu_header': menu_header,
             'menu2': data_db2,
-            'posts': data_db,
-            'controllers': controller_types_db,
+            'menu_common': menu_common,
+            'controllers_menu': controllers_menu,
            }
     return render(request, 'toolkit/index.html', context=data)
 
 def about(request):
-    return render(request, 'toolkit/about.html', {'title': 'О сайте', 'menu': menu})
+    return render(request, 'toolkit/about.html', {'title': 'О сайте', 'menu_header': menu_header})
 
 def manage_snmp(request):
 
-    return render(request, 'toolkit/manage_snmp.html',)
+    return render(request, 'toolkit/manage_snmp.html',{'title': 'Управление SNMP', 'menu_header': menu_header})
 
 
 def contact(request):
@@ -76,7 +88,7 @@ def show_tab(request, post_id):
 
     data = {
         'num_CO': controller.ip_adress,
-        'menu': menu,
+        'menu': menu_header,
         'controller': controller,
         'cat_selected': 1,
 
@@ -89,15 +101,8 @@ def show_tab(request, post_id):
 
 
 def calc_cyc(request):
-    print('calc_cyc')
-    return HttpResponse(request, 'toolkit/calc_cyc.html')
-
-def calc_conflicts(request):
-    print('calc_conflicts')
-    data = {'title': 'Расчёт конфликтов', 'menu': menu}
-    return render(request, 'toolkit/calc_conflicts.html', context=data)
-
-
+    data = {'title': 'Расчёт циклов и сдвигов', 'menu_header': menu_header}
+    return render(request, 'toolkit/calc_cyc.html', context=data)
 
 # def tabs(request, tabs_id):
 #     return HttpResponse(f'<h1> Странца приложения tabs </h1><p>id: {tabs_id}</p>')
@@ -125,15 +130,18 @@ def data_for_calc_conflicts(request):
     table_name = 'table_stages'
     query = request.GET
 
+    title = 'Расчёт концликтов'
+
     if not sdp_func_lib.check_query(query, table_name):
-        print(f'table_stages: {query.get(table_name)}')
-        return render(request, 'toolkit/calc_conflicts.html', context={'render_conflicts_data': False})
+        # print(f'table_stages: {query.get(table_name)}')
+        return render(request, 'toolkit/calc_conflicts.html', context={'render_conflicts_data': False,
+                                                                       'menu_header': menu_header,
+                                                                       'title': title})
 
 
-
-    print(f'req_GET: {query.get(table_name).strip()}')
+    # print(f'req_GET: {query.get(table_name).strip()}')
     data_from_table_stages = query.get(table_name).split('\n')
-    print(f'req_GET: {data_from_table_stages}')
+    # print(f'req_GET: {data_from_table_stages}')
 
     stages = []
     for num, line in enumerate(data_from_table_stages):
@@ -151,8 +159,8 @@ def data_for_calc_conflicts(request):
     print(data_from_table_stages)
     print(stages)
 
-    sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, binary_val_swarco_for_write_PTC2, \
-        binary_val_swarco_F009 = sdp_func_lib.calculate_conflicts(
+    sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, conflict_groups_F992, \
+        binary_val_swarco_for_write_PTC2, binary_val_swarco_F009 = sdp_func_lib.calculate_conflicts(
             stages=stages,
             controller_type='swarco',
             add_conflicts_and_binval_calcConflicts=True
@@ -163,27 +171,37 @@ def data_for_calc_conflicts(request):
     print(f'kolichestvo_napr: {kolichestvo_napr}')
     print(f'matrix_output: {matrix_output}')
     print(f'matrix_swarco_F997: {matrix_swarco_F997}')
+    print(f'conflict_groups_F992: {conflict_groups_F992}')
     print(f'binary_val_swarco_for_write_PTC2: {binary_val_swarco_for_write_PTC2}')
     print(f'binary_val_swarco_F009: {binary_val_swarco_F009}')
 
 
-
-
-#     result = sdp_func_lib.calculate_conflicts(
-#             stages=stages,
-# )
-
     data = {
-        'title': 'Расчёт концликтов',
+        'menu_header': menu_header,
+        'title': title,
         'render_conflicts_data': True,
         'values': ('| K|', '| O|'),
         'matrix': matrix_output,
         'sorted_stages': sorted_stages,
         'kolichestvo_napr': kolichestvo_napr,
-        'matrix_swarco_F997': matrix_swarco_F997
-
-
+        'matrix_swarco_F997': matrix_swarco_F997,
+        'conflict_groups_F992': conflict_groups_F992,
+        'binary_val_swarco_F009': binary_val_swarco_F009,
     }
 
 
     return render(request, 'toolkit/calc_conflicts.html', context=data)
+
+
+def controller_swarco(request):
+    data = {'title': 'Swarco', 'menu_header': menu_header}
+    return render(request, 'toolkit/swarco.html', context=data,)
+
+def controller_peek(request):
+    data = {'title': 'Peek', 'menu_header': menu_header}
+    return render(request, 'toolkit/peek.html', context=data)
+
+def controller_potok(request):
+    data = {'title': 'Поток', 'menu_header': menu_header}
+    return render(request, 'toolkit/potok.html', context=data)
+

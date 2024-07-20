@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>{{ title }}</h1>
+<h2>{{ title }}</h2>
 
 Пример расчета конфликтов##
 <p> Фазы-направления </p>
@@ -47,19 +47,37 @@
         {% endif %}
     {% endfor %}
 </table>
-
-<br>Матрица конфликтов "интергрин" F997:
 <br>
 
+{% comment %} Вывод матрицы конфликтов "интергрин" F997 {% endcomment %}
+<b>Матрица конфликтов "интергрин" F997:</b>
+<br>
 {% for line in matrix_swarco_F997 %}
-{% for el in line %}
-{{ el }}
-{% endfor %}
+    {% for el in line %}
+    {{ el }}
+    {% endfor %}
 <br>
 {% endfor %}
 
+{% comment %} Вывод матрицы физических конфликтов групп F992 {% endcomment %}
+<b>Физические конфликты - номера конфликтных групп F992:</b>
 <br>
+{% for line in conflict_groups_F992 %}
+    {% for el in line %}
+    {{ el }}
+    {% endfor %}
+<br>
+{% endfor %}
 
+{% comment %} Вывод бинарных значений направлений для фаз F009 {% endcomment %}
+<b>Сигнальные группы в фазах F009:</b>
+<br>
+{% for line in binary_val_swarco_F009 %}
+    {% for el in line %}
+    {{ el }}
+    {% endfor %}
+{% endfor %}
+<br>
 
 {% endif %}
 

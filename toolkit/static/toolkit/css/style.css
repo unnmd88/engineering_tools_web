@@ -12,6 +12,16 @@ body {
 }
 
 h2{
-    text-align: right;
+    text-align: left;
+    color: red;
+}
 
+#main_menu{
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 20px 40px;
+  border: 1px dotted gray;
 }

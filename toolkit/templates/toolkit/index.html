@@ -1,12 +1,33 @@
 {% extends 'base.html' %}
+{% load static %}
+
+
 
 {% block content %}
+<br>
+<i>
+    <b> Инструменты общего назначения </b>
+</i>
 <ul>
-    <li><a href="{% url 'manage_snmp'%}">Управление SNMP</a></li>
-<!--    <li><a href="{% url 'manage_snmp'%}">Фильтр SNMP</a></li>-->
-    <li><a href="{% url 'calc_cyc'%}">Расчёт Тцикла</a></li>
-    <li><a href="{% url 'calc_conflicts'%}">Расчёт конфликтов</a></li>
+    {% for menu in menu_common %}
+    <li><a href="{% url menu.url_name %}">{{ menu.title }}</a></li>
+    {% endfor %}
 </ul>
+
+<br>
+<i>
+    <b> Контрорллеры </b>
+</i>
+<ul>
+    {% for type_controller in controllers_menu %}
+    <li><a href="{% url type_controller.url_name %}">{{ type_controller.title }}</a></li>
+    {% endfor %}
+</ul>
+
+
+
+<script src="{% static 'toolkit/js/app.js'%}"></script>
+
 {% endblock %}
 
 

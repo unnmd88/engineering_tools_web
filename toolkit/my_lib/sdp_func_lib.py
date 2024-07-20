@@ -463,8 +463,10 @@ def calculate_conflicts(stages=None, name_for_txt_conflicts=None, path_to_config
     matrix_output, matrix_swarco_F997, binary_val_swarco_for_write_PTC2, \
         binary_val_swarco_F009 = make_conflicts_and_binary_val(sorted_stages, kolichestvo_napr)
 
+    conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997, controller_type)
+
     if add_conflicts_and_binval_calcConflicts or make_config and controller_type == 'swarco':
-        conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997, controller_type)
+
         write_conflicts_to_txt_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
                                     kolichestvo_napravleniy=kolichestvo_napr,
                                     sorted_stages=sorted_stages, matrix_output=matrix_output,
@@ -491,8 +493,9 @@ def calculate_conflicts(stages=None, name_for_txt_conflicts=None, path_to_config
             result_write_conflicts = make_dat_file_for_peek(
                 conflict_groups_F992, sum_conflicts, sorted_stages, path_to_config_file)
 
-    return sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, binary_val_swarco_for_write_PTC2, \
-        binary_val_swarco_F009
+    return sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, conflict_groups_F992,\
+        binary_val_swarco_for_write_PTC2, binary_val_swarco_F009
+
     # if flag_save_conflicts_to_PTC2:
     #     conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997)
     #     write_conflicts_to_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
