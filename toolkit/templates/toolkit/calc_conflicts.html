@@ -12,15 +12,14 @@
 </form>
 
 
+{% if render_conflicts_data %}
+{% for line in sorted_stages %}
+<br> Фаза {{ forloop.counter }}: {{ line|join:", " }}
+{% endfor %}
 
-<!--<table border="1" bgcolor="pink" cellpadding="8" cellspacing="4">-->
-<!--    {% for line in matrix %}-->
-<!--    <tr> <td> {{ line|join:' ' }} </td> </tr>-->
+<br> Количество направлений: {{ kolichestvo_napr }}
 
-<!--    {% endfor %}-->
-
-
-<!--</table>-->
+<p></p>
 
 
 <table border="1" bgcolor="#C0C0C0" cellpadding="8" cellspacing="4">
@@ -49,6 +48,20 @@
     {% endfor %}
 </table>
 
+<br>Матрица конфликтов "интергрин" F997:
+<br>
+
+{% for line in matrix_swarco_F997 %}
+{% for el in line %}
+{{ el }}
+{% endfor %}
+<br>
+{% endfor %}
+
+<br>
+
+
+{% endif %}
 
 
 
