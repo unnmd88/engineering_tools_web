@@ -21,12 +21,13 @@ def find_max_num_napravl(stages: list) -> int:
     for num_stage in range(len(stages)):
         try:
             tmp_max_napr = int(max(stages[num_stage], key=lambda napr: int(napr)))
-        # print(tmp_max_napr)
+            # print(tmp_max_napr)
             if max_napr < tmp_max_napr:
                 max_napr = tmp_max_napr
         except ValueError:
             pass
     return max_napr
+
 
 def get_data_from_list(path_to_file):
     try:
@@ -40,9 +41,6 @@ def get_data_from_list(path_to_file):
             for line in file:
                 data_list.append(line.strip().split(':'))
     return data_list
-
-
-
 
 
 def make_path_to_save_config(path_old: str):
@@ -450,7 +448,7 @@ def calculate_conflicts(stages=None, name_for_txt_conflicts=None, path_to_config
     if sorted_stages is None or kolichestvo_napr is None:
         return
     if name_for_txt_conflicts is None:
-        name_for_txt_conflicts = 'Calculate conflicts'
+        name_for_txt_conflicts = 'Calculate conflicts.txt'
 
     if controller_type is not None and make_config:
         if controller_type == 'swarco' and kolichestvo_napr > 48:
@@ -493,7 +491,8 @@ def calculate_conflicts(stages=None, name_for_txt_conflicts=None, path_to_config
             result_write_conflicts = make_dat_file_for_peek(
                 conflict_groups_F992, sum_conflicts, sorted_stages, path_to_config_file)
 
-    return matrix_output
+    return sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, binary_val_swarco_for_write_PTC2, \
+        binary_val_swarco_F009
     # if flag_save_conflicts_to_PTC2:
     #     conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997)
     #     write_conflicts_to_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
@@ -877,8 +876,6 @@ def check_host_tcp(ip_adress: str, port=80, timeout=2):
         return True
 
 
-
-
 # def make_S79UG405init(ip_adress_for_filter_snmp='anywhere', write_iptables_to_S79UG405init=True):
 #
 #     if ip_adress_for_filter_snmp == 'anywhere':
@@ -904,8 +901,6 @@ def check_host_tcp(ip_adress: str, port=80, timeout=2):
 #             file_write_data.write(content)
 #
 #     replace_windows_line_ending_to_unix_line_ending(configuration.path_to_S79UG405init)
-
-
 
 
 def replace_windows_line_ending_to_unix_line_ending(path_to_file):
@@ -1153,6 +1148,16 @@ def range_for_label_new_greenroad(span=4):
         range_to_change_label += list(range(cnt, cnt + span))
         cnt += span * 2
     return range_to_change_label
+
+
+def check_query(query, desired_text):
+
+    valid_data = query.get(desired_text)
+
+    if desired_text in query and valid_data is not None and valid_data.strip():
+        return True
+    return False
+
 # key = b'some_key'
 #
 # def encrypt(filename, key):
@@ -1162,3 +1167,5 @@ def range_for_label_new_greenroad(span=4):
 #         encrypted_data = f.encrypt(file_data)
 #     with open(filename, 'wb') as file:
 #         file.write(encrypted_data)
+
+
