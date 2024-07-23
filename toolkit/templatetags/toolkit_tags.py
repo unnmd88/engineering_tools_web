@@ -13,3 +13,4 @@ def get_controller_types():
 def show_controllers():
     types = views.controllers_menu
     return {'types': types}
+

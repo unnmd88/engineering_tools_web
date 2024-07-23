@@ -22,6 +22,10 @@ urlpatterns = [
     path("peek/", views.controller_peek, name='peek'),
     path("potok/", views.controller_potok, name='potok'),
 
+    path(r"manage_snmp/test_ajax/", views.test_ajax, name='test_ajax'),
+    path(r"manage_snmp/set_snmp_ajax/", views.set_snmp_ajax, name='set_snmp_ajax'),
+
+
     # path('toolkit/', views.index, name='toolkit'),
     # path('tabs/<int:tabs_id>/', views.tabs, name='tabs_id'), # http://127.0.0.1:8000/tabs/1/
     # path('tabs/<slug:tabs_slug>/', views.tabs_by_slug, name='tabs_slug'),  # http://127.0.0.1:8000/tabs/1/

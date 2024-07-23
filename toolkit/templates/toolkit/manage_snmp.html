@@ -1,5 +1,62 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <h1>{{ title }}</h1>
+
+<fieldset>
+<legend> Хост 1</legend>
+<label for="ip_1">IP-адресс</label>
+<input type="text" name="ip" class="get_data_snmp" id="ip_1" maxlength="15">
+<label for="protocol_1">Протокол </label>
+<select id="protocol_1">
+    <option>Swarco_STCIP</option>
+    <option>Поток_STCIP</option>
+    <option>Поток_UG405</option>
+    <option>Peek_UG405</option>
+</select>
+<label id="datahost_1">Данные с ДК</label>
+<input type="checkbox" value="host_1" id="getdatahost_1"/>
+<button class="btn1" id="SetToHost_1"> Отправить </button>
+</fieldset>
+<p></p>
+
+<fieldset>
+<legend> Хост 2</legend>
+<label for="ip_2">IP-адресс</label>
+<input type="text" name="ip" class="get_data_snmp" id="ip_2" maxlength="15">
+<label for="protocol_2">Протокол </label>
+<select id="protocol_2">
+        <option>Swarco_STCIP</option>
+        <option>Поток_STCIP</option>
+        <option>Поток_UG405</option>
+        <option>Peek_UG405</option>
+</select>
+<label id="datahost_2">Данные с ДК</label>
+<input type="checkbox" value="host_2" id="getdatahost_2"/>
+<button class="btn2" id="SetToHost_2"> Отправить </button>
+</fieldset>
+<p></p>
+
+<fieldset>
+<legend> Хост 3</legend>
+<label for="ip_3">IP-адресс</label>
+<input type="text" name="ip" class="get_data_snmp" id="ip_3" maxlength="15">
+<label for="protocol_3">Протокол </label>
+<select id="protocol_3">
+        <option>Swarco_STCIP</option>
+        <option>Поток_STCIP</option>
+        <option>Поток_UG405</option>
+        <option>Peek_UG405</option>
+</select>
+<label id="datahost_3">Данные с ДК</label>
+<input type="checkbox" value="host_3" id="getdatahost_3"/>
+<button class="btn3" id="SetToHost_3"> Отправить </button>
+</fieldset>
+<p></p>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script src="{% static 'toolkit/js/app.js'%}"></script>
 {% endblock %}

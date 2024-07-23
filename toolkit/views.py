@@ -1,3 +1,5 @@
+import json
+
 from django.http import HttpResponse, HttpResponseNotFound, Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import QueryDict
@@ -5,7 +7,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 
 from toolkit.models import TrafficLightObjects
-from toolkit.my_lib import sdp_func_lib, django_lib
+from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2
 
 menu_header = [
         {'title': 'Главная страница', 'url_name': 'home'},
@@ -47,11 +49,91 @@ controllers_menu = [
 ]
 
 
+def test_ajax(request):
+    print(f'request.GET: {request.GET}')
+
+    if request.GET:
+        ip_adress = request.GET.get("ip_adress")
+        protocol = request.GET.get("protocol")
+
+        print(f'request.GET ip_adress: {ip_adress}')
+        print(f'request.GET protocol: {protocol}')
+
+    else:
+        print('nnnnnooo')
+        return HttpResponse('error_get_data', content_type='text/html')
+
+
+    # curr_stage = snmpmanagement_v2.get_stage_stcip_potok(ip_adress)
+    # print(f'ip_adress: {ip_adress}')
+    # print(f'curr_stage obj1 {curr_stage}')
+
+    if protocol == 'Swarco_STCIP':
+        obj = snmpmanagement_v2.Swarco(ip_adress)
+        curr_stage = obj.get_stage_stcip_swarco()
+        curr_plan = obj.get_plan_stcip_swarco()
+    elif protocol == 'Поток_STCIP':
+        obj = snmpmanagement_v2.PotokS(ip_adress)
+        curr_stage = obj.get_stage_stcip_potok()
+        curr_plan = obj.get_plan_stcip_potok()
+    else:
+        curr_stage = curr_plan = None
+
+    print(f'curr_stage obj {curr_stage}')
+    print(f'curr_plan obj {curr_plan}')
+
+
+    json_data = {
+        'stage': curr_stage,
+        'curr_plan': curr_plan,
+    }
+
+
+
+    return HttpResponse(json.dumps(json_data), content_type='text/html')
+
+def set_snmp_ajax(request):
+
+    print(f'set_snmp_ajax')
+    print(f'request.GET: {request.GET}')
+
+
+    if request.GET:
+        ip_adress = request.GET.get("ip_adress")
+        protocol = request.GET.get("protocol")
+
+        print(f'request.GET ip_adress: {ip_adress}')
+        print(f'request.GET protocol: {protocol}')
+
+    else:
+        print('nnnnnooo')
+        return HttpResponse('error_get_data', content_type='text/html')
+
+    # curr_stage = snmpmanagement_v2.get_stage_stcip_potok(ip_adress)
+    # print(f'ip_adress: {ip_adress}')
+    # print(f'curr_stage obj1 {curr_stage}')
+
+    if protocol == 'Swarco_STCIP':
+        pass
+    elif protocol == 'Поток_STCIP':
+        obj = snmpmanagement_v2.PotokS(ip_adress)
+        set_req = obj.set_stage_stcip_potok('4')
+    else:
+        set_req = 'Косяяяк'
+
+    print(f'set_req obj {set_req}')
+
+
+    json_data = {
+        'set_command': set_req,
+    }
+
+    return HttpResponse(json.dumps(json_data), content_type='text/html')
 
 def my_python_function ( request ): # Ваш код Python здесь
     response_data = {'message' : 'Функция Python вызвана успешно!'}
     print(response_data)
-    return JsonResponse (response_data)
+    return JsonResponse(response_data)
 
 
 def index(request):

@@ -116,6 +116,9 @@ path_to_saved_conflicts_txt = 'conflicts/'
 path_to_img_swarco_inputs = 'images/inputs_swarco2.png'
 path_to_img_swarco_bin_vals = 'images/degree_and_sf.png'
 
+path_snmpget = r"toolkit\my_lib\SnmpGet.exe"
+path_snmpset = r"toolkit\my_lib\SnmpSet.exe"
+
 
 name_configuration = 'configuration'
 
