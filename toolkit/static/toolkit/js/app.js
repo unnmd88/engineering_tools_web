@@ -12,7 +12,7 @@
 
 let intervalID = [false, false, false, false]
 
-// Отслеживаем нажатие чекбокса, который отвечает за постоянный запрос данных с дк по snmp
+// Отслеживаем нажатие чекбокса, который отвечает за постоянный запрос данных с дк по snmp у хоста 1
 $("#getdatahost_1").change(function() {
     console.log(intervalID)
 
