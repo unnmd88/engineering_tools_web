@@ -10,7 +10,10 @@
 //}  
 //)
 
-let intervalID = [false, false, false, false]
+let intervalID = [false, false, false, false, false, false, false, false, false]
+const chkbx = [getdatahost_1, getdatahost_2, getdatahost_3, getdatahost_4, getdatahost_5,
+    getdatahost_6, getdatahost_7, getdatahost_8, getdatahost_9
+]
 
 // Отслеживаем нажатие чекбокса, который отвечает за постоянный запрос данных с дк по snmp у хоста 1
 $("#getdatahost_1").change(function() {
@@ -67,10 +70,41 @@ $("#getdatahost_2").change(function() {
 )
 
 
+for (let i=1; i < 11; i++) {
+    console.log(`Это i: ${i}`)
+    $(`#getdatahost_${i}`).change(function() {
+        console.log(intervalID)
+    
+        console.log(`num_host = ${i}`)
+    
+        if (chkbx[i-1].checked && !intervalID[i]){
+            let id_getData = setInterval(getData, 4000, i);
+            intervalID[i] = id_getData;
+    
+        console.log('if');
+    
+        }
+        else{
+            clearInterval(intervalID[i])
+            intervalID[i] = false;
+        console.log('else');
+        document.getElementById(`datahost_${i}`).textContent="--";
+    
+        }
+        console.log(intervalID)
+    
+        }
+    
+    )
+}
+
+
+
 
 // Функция запроса и получения текущего режима/плана/фазы по snmp
 let getData = function (num_host){
 
+    console.log(num_host);
     $.ajax({
 
     type: "GET",

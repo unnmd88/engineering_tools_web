@@ -5,29 +5,6 @@
 
 {% block content %}
 
-<i>
-    <b> Инструменты общего назначения </b>
-</i>
-<ul>
-    {% for menu in menu_common %}
-    <li><a href="{% url menu.url_name %}">{{ menu.title }}</a></li>
-    {% endfor %}
-</ul>
-
-<br>
-<i>
-    <b> Контрорллеры </b>
-</i>
-<ul>
-    {% for type_controller in controllers_menu %}
-    <li><a href="{% url type_controller.url_name %}">{{ type_controller.title }}</a></li>
-    {% endfor %}
-</ul>
-
-
-
-
-
 
 {% endblock %}
 

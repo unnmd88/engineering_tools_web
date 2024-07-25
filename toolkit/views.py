@@ -152,7 +152,22 @@ def about(request):
 
 def manage_snmp(request):
 
-    return render(request, 'toolkit/manage_snmp.html',{'title': 'Управление SNMP', 'menu_header': menu_header})
+    protocols = ('UG405_Поток', 'STCIP_Поток', 'STCIP_Swarco', 'UG405_Peek')
+
+
+    first_row_settings = {'label_settings': 'Настройки ДК', 'ip': 'IP-адресс', 'scn': 'SCN', 'protocol': 'Протокол'}
+    second_row_get = {'controller_data': 'Информация с ДК', 'label_get_data': 'Получать данные с ДК', 'label_data': 'Данные с ДК'}
+    third_row_set = {'set_btn': 'Отправить'}
+
+    host_data = {
+        'first_row_settings': first_row_settings,
+        'second_row_get': second_row_get,
+        'third_row_set': third_row_set,
+        'num_hosts': tuple(i for i in range(5, 10)),
+        'protocols': protocols,
+    }
+
+    return render(request, 'toolkit/manage_snmp.html', context=host_data)
 
 
 def contact(request):
