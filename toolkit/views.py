@@ -137,6 +137,7 @@ def my_python_function ( request ): # Ваш код Python здесь
 
 
 def index(request):
+    print('ind')
 
     data = {'title': 'Главная страница',
             'menu_header': menu_header,
@@ -286,4 +287,3 @@ def controller_peek(request):
 def controller_potok(request):
     data = {'title': 'Поток', 'menu_header': menu_header}
     return render(request, 'toolkit/potok.html', context=data)
-
