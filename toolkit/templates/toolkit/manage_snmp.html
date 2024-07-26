@@ -4,115 +4,29 @@
 {% block content %}
 <h1 class="manage_snmp">{{ title }}</h1>
 
-<fieldset>
-<legend> Хост 1</legend>
-<label for="ip_1">IP-адресс</label>
-<input type="text" name="ip" class="get_data_snmp" id="ip_1" maxlength="15">
-<label for="protocol_1">Протокол </label>
-<select id="protocol_1">
-    <option>Swarco_STCIP</option>
-    <option>Поток_STCIP</option>
-    <option>Поток_UG405</option>
-    <option>Peek_UG405</option>
-</select>
-<label id="datahost_1">Данные с ДК</label>
-<input type="checkbox" value="host_1" id="getdatahost_1"/>
-<button class="btn1" id="SetToHost_1"> Отправить </button>
-</fieldset>
-<p></p>
-
-<fieldset>
-<legend class="legend"> Хост 2</legend>
-<label for="ip_2">IP-адресс</label>
-<input type="text" name="ip" class="get_data_snmp" id="ip_2" maxlength="15">
-<label for="protocol_2">Протокол </label>
-<select id="protocol_2">
-        <option>Swarco_STCIP</option>
-        <option>Поток_STCIP</option>
-        <option>Поток_UG405</option>
-        <option>Peek_UG405</option>
-</select>
-<label id="datahost_2">Данные с ДК</label>
-<input type="checkbox" value="host_2" id="getdatahost_2"/>
-<button class="btn2" id="SetToHost_2"> Отправить </button>
-</fieldset>
-<p></p>
-
-<fieldset>
-<legend> Хост 3</legend>
-<label class="manage_snmp" for="ip_3">IP-адресс</label>
-<input type="text" name="ip" class="get_data_snmp" id="ip_3" maxlength="15">
-<label for="protocol_3">Протокол </label>
-<select id="protocol_3">
-        <option>Swarco_STCIP</option>
-        <option>Поток_STCIP</option>
-        <option>Поток_UG405</option>
-        <option>Peek_UG405</option>
-</select>
-<label id="datahost_3">Данные с ДК</label>
-<input type="checkbox" value="host_3" id="getdatahost_3"/>
-<button class="btn3" id="SetToHost_3"> Отправить </button>
-</fieldset>
-<p></p>
-
-<table border="1" bgcolor="pink" cellpadding="8" cellspacing="4">
-        <caption align="right"> Хост 4 </caption>
+<table border="3">
         <tr>
                 <td>
-                        Настройки ДК
-                </td>
-                <td>    <label class="manage_snmp" for="ip_4">IP-адресс</label>
-                        <input type="text" name="ip" class="get_data_snmp" id="ip_4" maxlength="15">
-                </td> 
-                
-                <td>    <label class="manage_snmp" for="scn_4">SCN</label>
-                        <input type="text" name="scn" class="get_data_snmp" id="scn_4" maxlength="15">
-                </td>
-                <td>
-                        <label for="protocol_4">Протокол </label>
-                        <select id="protocol_4">
-                                <option>Swarco_STCIP</option>
-                                <option>Поток_STCIP</option>
-                                <option>Поток_UG405</option>
-                                <option>Peek_UG405</option>
+                        <label for="visible_hosts"> Количетво хостов </label>
+                        <select id="visible_hosts">
+                                {% for num_host in num_hosts %}
+                                <option>{{ num_host }}</option>
+                                {% endfor %}
                         </select>
+                        <button id="display_hosts_snmp"> Отобразить </button>
                 </td>
-
-        </tr>
-        <tr>    
-                <td>
-                        Информация с ДК 
-                </td>
-                <td>
-                        <input type="checkbox" value="host_4" id="getdatahost_4">
-                        <label for="getdatahost_4"></label>Получать данные с ДК</input>
-                        
-                </td>
-                <td colspan="2"><label id="datahost_4">Данные с ДК</label></td>
                 
         </tr>
-        <tr>
-                <td> Управление ДК </td>
-                <td>    <select type="" value="host_4" id="setdatahost_4">
-                        <option>Фаза</option>
-                        </select>
-                        <input placeholder="Значение фазы/команды" type="text" name="setval" class="set_value" id="setval_4" maxlength="15">
-
-                </td>
-                <td><button class="set_value" id="SetToHost_4"> Отправить </button></td>
-        </tr>
-
-
-
 </table>
 
 
+<br>
 
 
 {% for num_host in num_hosts %}
 
 
-<table border="1" bgcolor="pink" cellpadding="8" cellspacing="4">
+<table id="table_{{num_host}}" border="1" bgcolor="pink" cellpadding="8" cellspacing="4" align="center" hidden="hidden">
         <caption align="right"> Хост {{ num_host }} </caption>
         <tr>
                 <td>
@@ -160,7 +74,6 @@
         </tr>
 
 </table>
-
 
 {% endfor %}
 

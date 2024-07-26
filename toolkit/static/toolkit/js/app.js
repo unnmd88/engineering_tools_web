@@ -11,9 +11,11 @@
 //)
 
 let intervalID = [false, false, false, false, false, false, false, false, false]
+
 const chkbx = [getdatahost_1, getdatahost_2, getdatahost_3, getdatahost_4, getdatahost_5,
     getdatahost_6, getdatahost_7, getdatahost_8, getdatahost_9
 ]
+
 
 // Отслеживаем нажатие чекбокса, который отвечает за постоянный запрос данных с дк по snmp у хоста 1
 $("#getdatahost_1").change(function() {
@@ -70,6 +72,9 @@ $("#getdatahost_2").change(function() {
 )
 
 
+
+
+// Создаем функции на изменения чекбокс внутри каждого хоста
 for (let i=1; i < 11; i++) {
     console.log(`Это i: ${i}`)
     $(`#getdatahost_${i}`).change(function() {
@@ -97,6 +102,39 @@ for (let i=1; i < 11; i++) {
     
     )
 }
+
+
+
+// Клик на #display_hosts_snmp -> Отображение количества хостов
+$("#display_hosts_snmp").click( function() {
+    show_hide_hosts_snmp();
+    } 
+)
+
+// Функция отображения количества хостов
+const show_hide_hosts_snmp = function () {
+    console.log('ssssss')
+    const select_visible_hosts = document.querySelector('#visible_hosts');
+    const num_hosts_to_view = select_visible_hosts.value;
+    console.log(`num_hosts_to_view -> ${num_hosts_to_view}`);
+
+    for (let i=1; i < 10; i++) {
+        if(i <= num_hosts_to_view) {
+            $(`#table_${i}`).show();
+        }
+        else {
+            $(`#table_${i}`).hide();
+        }
+        }
+}
+
+$(`#table_1`).show();
+
+
+
+
+
+
 
 
 

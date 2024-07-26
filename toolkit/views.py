@@ -163,7 +163,7 @@ def manage_snmp(request):
         'first_row_settings': first_row_settings,
         'second_row_get': second_row_get,
         'third_row_set': third_row_set,
-        'num_hosts': tuple(i for i in range(5, 10)),
+        'num_hosts': tuple(i for i in range(1, 10)),
         'protocols': protocols,
     }
 
