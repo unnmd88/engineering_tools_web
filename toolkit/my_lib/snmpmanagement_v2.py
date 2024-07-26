@@ -5,6 +5,7 @@ import socket
 from pysnmp.hlapi.asyncio import *
 from toolkit.my_lib.configuration import auth, path_snmpget, path_snmpset
 
+
 # snmp_get = path_snmpget
 # snmp_set = path_snmpset
 
@@ -20,6 +21,8 @@ class CommonSettingsAllProtocols:
     snmp_get = path_snmpget
     snmp_set = path_snmpset
 
+    def __init__(self, ip_adress):
+        self.ip_adress = ip_adress
 
 
 # print('snmpmanagement is called')
@@ -35,30 +38,28 @@ class Swarco(CommonSettingsAllProtocols):
                                      '5': '6', '6': '7', '7': '8', '8': '1',
                                      'ЛОКАЛ': '0'}
     # Ключи oid STCIP Swarco
-    swarco_swarcoUTCTrafftechPhaseCommand = 'swarcoUTCTrafftechPhaseCommand'
-    swarco_swarcoUTCCommandDark = 'swarcoUTCCommandDark'
-    swarco_swarcoUTCCommandFlash = 'swarcoUTCCommandFlash'
-    swarco_swarcoUTCTrafftechPlanCommand = 'swarcoUTCTrafftechPlanCommand'
-    swarco_swarcoUTCStatusEquipment = 'swarcoUTCStatusEquipment'
-    swarco_swarcoUTCTrafftechPhaseStatus = 'swarcoUTCTrafftechPhaseStatus'
-    swarco_swarcoUTCTrafftechPlanCurrent = 'swarcoUTCTrafftechPlanCurrent'
+    swarco_swarcoUTCTrafftechPhaseCommand = '1.3.6.1.4.1.1618.3.7.2.11.1.0'
+    swarco_swarcoUTCCommandDark = '1.3.6.1.4.1.1618.3.2.2.2.1.0'
+    swarco_swarcoUTCCommandFlash = '1.3.6.1.4.1.1618.3.2.2.1.1.0'
+    swarco_swarcoUTCTrafftechPlanCommand = '1.3.6.1.4.1.1618.3.7.2.2.1.0'
+    swarco_swarcoUTCStatusEquipment = '1.3.6.1.4.1.1618.3.6.2.1.2.0'
+    swarco_swarcoUTCTrafftechPhaseStatus = '1.3.6.1.4.1.1618.3.7.2.11.2.0'
+    swarco_swarcoUTCTrafftechPlanCurrent = '1.3.6.1.4.1.1618.3.7.2.1.2.0'
     # oid для STCIP Swarco
-    oids_STCIP_SWARCO = {swarco_swarcoUTCTrafftechPhaseStatus: '1.3.6.1.4.1.1618.3.7.2.11.2.0',
-                         swarco_swarcoUTCTrafftechPlanCurrent: '1.3.6.1.4.1.1618.3.7.2.1.2.0',
-                         swarco_swarcoUTCTrafftechPhaseCommand: '1.3.6.1.4.1.1618.3.7.2.11.1.0',
-                         swarco_swarcoUTCCommandDark: '1.3.6.1.4.1.1618.3.2.2.2.1.0',
-                         swarco_swarcoUTCCommandFlash: '1.3.6.1.4.1.1618.3.2.2.1.1.0',
-                         swarco_swarcoUTCTrafftechPlanCommand: '1.3.6.1.4.1.1618.3.7.2.2.1.0',
-                         swarco_swarcoUTCStatusEquipment: '1.3.6.1.4.1.1618.3.6.2.1.2.0'}
+    # oids_STCIP_SWARCO = {swarco_swarcoUTCTrafftechPhaseStatus: '1.3.6.1.4.1.1618.3.7.2.11.2.0',
+    #                      swarco_swarcoUTCTrafftechPlanCurrent: '1.3.6.1.4.1.1618.3.7.2.1.2.0',
+    #                      swarco_swarcoUTCTrafftechPhaseCommand: '1.3.6.1.4.1.1618.3.7.2.11.1.0',
+    #                      swarco_swarcoUTCCommandDark: '1.3.6.1.4.1.1618.3.2.2.2.1.0',
+    #                      swarco_swarcoUTCCommandFlash: '1.3.6.1.4.1.1618.3.2.2.1.1.0',
+    #                      swarco_swarcoUTCTrafftechPlanCommand: '1.3.6.1.4.1.1618.3.7.2.2.1.0',
+    #                      swarco_swarcoUTCStatusEquipment: '1.3.6.1.4.1.1618.3.6.2.1.2.0'}
 
-    def __init__(self, ip_adress):
-        self.ip_adress = ip_adress
+    """ GET REQUEST """
 
-    def get_stage_stcip_swarco(self):
+    def get_stage(self):
         """  Возвращает номер текущей фазы """
 
-
-        oid = self.oids_STCIP_SWARCO.get(self.swarco_swarcoUTCTrafftechPhaseStatus)
+        oid = self.swarco_swarcoUTCTrafftechPhaseStatus
         bad_oid = ['\n']
 
         for i in range(4):
@@ -67,6 +68,7 @@ class Swarco(CommonSettingsAllProtocols):
             # val = proc.stdout.readline().rstrip().replace(" ", '').replace('.', '')
             proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
             val = proc.readline().rstrip().replace(" ", '').replace('.', '')
+
             if 'Timeout' not in val and val != bad_oid:
                 # proc.kill()
                 return self.get_val_stage_STCIP_swarco.get(val)
@@ -75,13 +77,13 @@ class Swarco(CommonSettingsAllProtocols):
                 return 'None'
             elif 'Timeout' in val:
                 # proc.kill()
+                print('timeout')
                 continue
 
-    def get_plan_stcip_swarco(self):
+    def get_plan(self):
         """  Возвращает номер текущего плана """
 
-
-        oid = self.oids_STCIP_SWARCO.get(self.swarco_swarcoUTCTrafftechPlanCurrent)
+        oid = self.swarco_swarcoUTCTrafftechPlanCurrent
         bad_oid = ['\n']
 
         for i in range(4):
@@ -94,7 +96,7 @@ class Swarco(CommonSettingsAllProtocols):
             elif 'Timeout' in val:
                 continue
 
-    def get_status_stcip_swarco(self):
+    def get_status(self):
         """Возвращает значение "swarcoUTCStatusEquipment" (INTEGER):
             noInformation(0),
             workingProperly(1),
@@ -105,7 +107,7 @@ class Swarco(CommonSettingsAllProtocols):
             allRed(6)
         """
 
-        oid = self.oids_STCIP_SWARCO.get(self.swarco_swarcoUTCStatusEquipment)
+        oid = self.swarco_swarcoUTCStatusEquipment
         bad_oid = ['\n']
 
         for i in range(4):
@@ -120,15 +122,14 @@ class Swarco(CommonSettingsAllProtocols):
             elif 'Timeout' in val:
                 continue
 
-    def get_dark_stcip_swarco(self):
+    def get_dark(self):
         """ Возвращает значение  swarcoUTCCommandDark (INTEGER):
              commandDarkNormal(0),
              commandDarkTimed(1),
              commandDarkPermanent(2) --> вкл. режим ОС(18 план)
          """
 
-
-        oid = self.oids_STCIP_SWARCO.get(self.swarco_swarcoUTCCommandDark)
+        oid = self.swarco_swarcoUTCCommandDark
         bad_oid = ['\n']
 
         for i in range(4):
@@ -141,14 +142,14 @@ class Swarco(CommonSettingsAllProtocols):
             elif 'Timeout' in val:
                 continue
 
-    def get_flash_stcip_swarco(self):
+    def get_flash(self):
         """ Возвращает значение  swarcoUTCCommandFlash (INTEGER):
             commandFlashNormal(0),
             commandFlashTimed(1),
             commandFlashPermanent(2) --> вкл. режим ЖМ(17 план)
         """
 
-        oid = self.oids_STCIP_SWARCO.get(self.swarco_swarcoUTCCommandFlash)
+        oid = self.swarco_swarcoUTCCommandFlash
 
         for i in range(4):
             proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
@@ -160,9 +161,64 @@ class Swarco(CommonSettingsAllProtocols):
             elif 'Timeout' in val:
                 continue
 
+    """ SET REQUEST """
+
+    def set_set_reset_dark(self, value='0'):
+        """ Функция включает/выключает режим ОС..
+            Необходимо передать ip и значение: 2 -> включить ОС, 0 -> выключить ОС.
+            Если не передать значение, установит 0(выключить ОС)
+        """
+
+        oid = self.swarco_swarcoUTCCommandDark
+
+        for i in range(2):
+            os.popen(f'{self.snmp_set} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}'
+                     f' -val:{value} -tp:int')
+
+    def set_set_reset_yellow_flash(self, value='0'):
+        """ Функция включает/выключает режим ЖМ..
+            Необходимо передать ip и значение: 2 -> включить ЖМ, 0 -> выключить ЖМ.
+            Если не передать значение, установит 0(выключить ЖМ)
+        """
+
+        oid = self.swarco_swarcoUTCCommandFlash
+
+        for i in range(2):
+            os.popen(f'{self.snmp_set} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}'
+                     f' -val:{value} -tp:int')
+
+    def set_reset_all_red(self, value='100'):
+        """ Функция включает/выключает режим КК..
+            Необходимо передать ip и значение: 119 -> включить КК, 100 -> выключить КК.
+            По умолчанию выключает  КК -> val=100
+        """
+
+        oid = self.swarco_swarcoUTCTrafftechPlanCommand
+
+        for i in range(2):
+            os.popen(f'{self.snmp_set} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}'
+                     f' -val:{value} -tp:uint')
+
+    def set_stage(self, value: str = 'ЛОКАЛ'):
+        """ Функция устанавливает set запрос фазы
+            Необходимо передать ip, значение фазы в виде: "Фаза 1", "Фаза 2"..."Фаза n".
+            Если не указать значение, то по умолчанию установит 0(перевод в "Локал")
+        """
+
+        if value not in self.set_stage_STCIP_swarco_values:
+            return
+
+        oid = self.swarco_swarcoUTCTrafftechPhaseCommand
+        value = self.set_stage_STCIP_swarco_values.get(value)
+
+        for i in range(2):
+            os.popen(f'{self.snmp_set} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}'
+                     f' -val:{value} -tp:uint')
+
+    """ GET MODE """
+
 
 class PotokS(CommonSettingsAllProtocols):
-
     community = 'private'
 
     get_val_stage_STCIP_potok = {
@@ -191,9 +247,6 @@ class PotokS(CommonSettingsAllProtocols):
                         get_status_stip_potok: '1.3.6.1.4.1.1618.3.6.2.1.2.0',
                         all_red_potok_STCIP: '1.3.6.1.4.1.1618.3.2.2.4.1.0',
                         set_restart_programm_potok_STCIP: '.1.3.6.1.4.1.1618.3.2.2.3.1.0'}
-
-    def __init__(self, ip_adress):
-        self.ip_adress = ip_adress
 
     """*******************************************************************
     ***                          GET-REQUEST                          ****   
@@ -228,7 +281,6 @@ class PotokS(CommonSettingsAllProtocols):
     def get_plan_stcip_potok(self):
         """  Возвращает номер текущего плана """
 
-
         oid = self.oids_STCIP_POTOK.get(self.get_current_plan_potok_STCIP)
         bad_oid = ['\n']
 
@@ -252,7 +304,6 @@ class PotokS(CommonSettingsAllProtocols):
             11 - удаленное управление (Ц)
             12 - рабочая программа (Ф или А)
         """
-
 
         oid = self.oids_STCIP_POTOK.get(self.get_mode_stip_potok)
         bad_oid = ['\n']
@@ -278,7 +329,6 @@ class PotokS(CommonSettingsAllProtocols):
             4 - ЖМ
             6 - КК
         """
-
 
         oid = self.oids_STCIP_POTOK.get(self.get_status_stip_potok)
         bad_oid = ['\n']
@@ -369,7 +419,6 @@ class PotokS(CommonSettingsAllProtocols):
             Если не передать значение, установит 0(выключить ОС)
         """
 
-
         oid = f'{self.oids_STCIP_POTOK.get(self.dark_potok_STCIP)}'
 
         for i in range(2):
@@ -382,7 +431,6 @@ class PotokS(CommonSettingsAllProtocols):
             Если не передать значение, установит 0(выключить ЖМ)
         """
 
-
         oid = f'{self.oids_STCIP_POTOK.get(self.yellow_flash_potok_STCIP)}'
 
         for i in range(2):
@@ -394,7 +442,6 @@ class PotokS(CommonSettingsAllProtocols):
             Необходимо передать ip и значение: 2 -> включить КК, 0 -> выключить КК.
             Если не передать значение, установит 0(выключить КК)
         """
-
 
         oid = f'{self.oids_STCIP_POTOK.get(self.all_red_potok_STCIP)}'
 
@@ -429,16 +476,14 @@ class PotokS(CommonSettingsAllProtocols):
             os.popen(f'{self.snmp_set} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}'
                      f' -val:{value} -tp:int')
 
+
+class Potok(CommonSettingsAllProtocols):
+    def __init__(self, ip_adress, scn):
+        super().__init__(ip_adress)
+        self.scn = scn
+
+
 ###########################
-
-
-
-
-
-
-
-
-
 
 
 def val_stages_for_get_stage_UG405_potok(option=None):
@@ -638,8 +683,6 @@ oids_UG405_POTOK = {get_current_stage_potok_UG405: '.1.3.6.1.4.1.13267.3.2.5.1.1
 # get_val_stage_STCIP_potok = {'2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8,
 # get_val_stage_STCIP_potok = {str(k): str(v) for k, v in zip(range(2, 66), range(1, 65))}
 # Словарь вида: {'2': '1', '3': '2', '4': '3'...'65': '64'}
-
-
 
 
 # ************************************************************************************ #
@@ -1134,8 +1177,6 @@ def get_all_red_stcip_potok(ip_adress: str):
 def get_stage_stcip_swarco(ip_adress: str):
     """  Возвращает номер текущей фазы """
 
-
-
     community = community_swarco
     print(f'community: {community}')
     community = 'private'
@@ -1331,16 +1372,13 @@ def set_Fn_ug405_peek(ip_adress: str, scn_no_convert: str, value):
     async def run():
         errorIndication, errorStatus, errorIndex, varBinds = await setCmd(
 
-                SnmpEngine(),
-                CommunityData(community, mpModel=1),
-                UdpTransportTarget((ip_adress, 161), timeout=1, retries=2),
-                ContextData(),
-                ObjectType(ObjectIdentity(oid), value)
-            )
+            SnmpEngine(),
+            CommunityData(community, mpModel=1),
+            UdpTransportTarget((ip_adress, 161), timeout=1, retries=2),
+            ContextData(),
+            ObjectType(ObjectIdentity(oid), value)
+        )
         asyncio.run(run())
-
-
-
 
 
 def set_TO_ug405_peek(ip_adress, scn_no_convert, value=1):
@@ -1676,5 +1714,3 @@ def check_host_tcp(ip_adress: str, port=80, timeout=2):
         return False
     else:
         return True
-
-

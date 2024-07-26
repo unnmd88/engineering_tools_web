@@ -22,7 +22,8 @@ urlpatterns = [
     path("peek/", views.controller_peek, name='peek'),
     path("potok/", views.controller_potok, name='potok'),
 
-    path(r"manage_snmp/test_ajax/", views.test_ajax, name='test_ajax'),
+    # path(r"manage_snmp/test_ajax/", views.test_ajax, name='test_ajax'),
+    path("manage_snmp/get-data-snmp/<int:num_host>/", views.get_snmp_ajax, name='test_ajax'),
     path(r"manage_snmp/set_snmp_ajax/", views.set_snmp_ajax, name='set_snmp_ajax'),
 
 
