@@ -48,15 +48,19 @@ let getData = function (num_host){
     data:{
         'ip_adress': $('#ip_' + num_host).val(),
         'protocol': $(`#protocol_${num_host} option:selected`).text(),
+        'scn': $(`#scn_${num_host}`).val(),
         },
 
     dataType: 'text',
     cache: false,
     success: function (data) {
     console.log(data)
-    const postStringify = JSON.parse(data)
-    console.log(postStringify)
-    $(`#datahost_${num_host}`).text(data);
+    let postStringify = JSON.parse(data);
+    console.log(postStringify);
+    $(`#datahost_${num_host}`).text(`Фаза: ${postStringify.Фаза}, План: ${postStringify.План}, \n
+                                    Режим: ${postStringify.Режим}  `);
+                                    
+    // $(`#datahost_${num_host}`).text(data);
     // document.getElementById(`datahost_${num_host}`).textContent=data;
     if (data == 'yes'){
     console.log(data);

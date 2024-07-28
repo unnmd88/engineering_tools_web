@@ -1,16 +1,45 @@
+import time
+import web_management
+
 import snmpmanagement_v2
+import os
+from selenium import webdriver
+import time
+
+host4 = web_management.PeekWeb('10.45.154.19')
+host4.session_refactor(user_parameters={'UP_0': '1'})
+# PhantomJS
+
+
+# host2 = snmpmanagement_v2.Potok('10.45.154.12', 'CO1111')
+# print(host2.get_plan_source())
+# print(host2.scn)
+
+
+host3 = snmpmanagement_v2.Potok('10.179.114.97', 'CO4523')
+
+# print(host3)
+# print(host3.scn)
+
+
+# def get_det():
+#     """  Возвращает номер текущего плана """
+#
+#
+#     bad_oid = ['\n']
+#
+#     for i in range(4):
+#         proc = os.popen(f'snmpget.exe -q -r:10.179.68.9 -v:2c -t:1 -c:private -o:.1.3.6.1.4.1.1618.3.3.2.2.2.0')
+#         val = proc.readline().rstrip().replace(" ", '').replace('.', '')
+#         if 'Timeout' not in val and val != bad_oid:
+#             return val
+#         elif i == 3:
+#             return 'None'
+#         elif 'Timeout' in val:
+#             continue
+#
+# data = get_det()
+# print(data)
 
 
 
-
-h1 = snmpmanagement_v2.Swarco('10.179.58.233')
-
-
-
-
-
-print(f'h1: {h1.get_stage()}')
-
-
-
-print(h1.__dict__)
