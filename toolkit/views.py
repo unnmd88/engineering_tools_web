@@ -230,6 +230,8 @@ def page_not_found(request, exception):
 def data_for_calc_conflicts(request):
     table_name = 'table_stages'
     query = request.GET
+    print(f'query: {query}')
+
 
     title = 'Расчёт концликтов'
 
@@ -271,8 +273,13 @@ def data_for_calc_conflicts(request):
     # print(data_from_table_stages)
     # print(stages)
 
-    obj = conflicts.Conflicts(stages=query.get(table_name), controller_type='swarco',)
-    res = obj.calculate_conflicts(add_conflicts_and_binval_calcConflicts=True,
+    print(f'query: {query}')
+
+
+    obj = conflicts.Conflicts()
+    res = obj.calculate_conflicts(input_stages=query.get(table_name),
+                                  controller_type='swarco',
+                                  add_conflicts_and_binval_calcConflicts=True,
                                   make_config=True,
                                   prefix_for_new_file='Nnnnew',
                                   path_to_txt_conflicts=r'toolkit\tmp\conf2.txt',
@@ -286,6 +293,7 @@ def data_for_calc_conflicts(request):
     #     add_conflicts_and_binval_calcConflicts=True
     # )
 
+    print(f'odj__dict__: {obj.result_num_kolichestvo_napr}')
     print(f'sorted_stages: {obj.sorted_stages}')
     print(f'kolichestvo_napr: {obj.kolichestvo_napr}')
     print(f'matrix_output: {obj.matrix_output}')
