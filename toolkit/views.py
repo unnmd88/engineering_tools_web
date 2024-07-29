@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 
 from toolkit.models import TrafficLightObjects
-from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2
+from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts
 
 menu_header = [
     {'title': 'Главная страница', 'url_name': 'home'},
@@ -234,56 +234,78 @@ def data_for_calc_conflicts(request):
     title = 'Расчёт концликтов'
 
     if not sdp_func_lib.check_query(query, table_name):
-        # print(f'table_stages: {query.get(table_name)}')
-        return render(request, 'toolkit/calc_conflicts.html', context={'render_conflicts_data': False,
-                                                                       'menu_header': menu_header,
-                                                                       'title': title})
+        print(f'table_stages: {query.get(table_name)}')
+        data = {'render_conflicts_data': False, 'menu_header': menu_header,'title': title}
+        return render(request, 'toolkit/calc_conflicts.html', context=data)
 
-    # print(f'req_GET: {query.get(table_name).strip()}')
-    data_from_table_stages = query.get(table_name).split('\n')
-    # print(f'req_GET: {data_from_table_stages}')
+    # print(f'req_GET: {query}')
+    # print(f'{query.get(table_name).strip()}: {query.get(table_name).strip()}')
+    # data_from_table_stages = query.get(table_name).split('\n')
+    # print(f'data_from_table_stages: {data_from_table_stages}')
+    #
+    # stages = []
+    # for num, line in enumerate(data_from_table_stages):
+    #     if ':' in line:
+    #         processed_line = line.replace("\r", '').split(':')[1]
+    #     else:
+    #         processed_line = line.replace("\r", '')
+    #
+    #     processed_line = processed_line.replace(" ", '')
+    #
+    #     print(f'processed_line до split ",": {processed_line}')
+    #
+    #
+    #
+    #
+    #     processed_line = processed_line.split(',')
+    #     # Проверка корректности введенных данных
+    #     for char in processed_line:
+    #         if not char.isdigit():
+    #             raise ValueError
+    #
+    #
+    #
+    #     print(f'processed_line: {processed_line}')
+    #     stages.append(processed_line)
+    #
+    # print(data_from_table_stages)
+    # print(stages)
 
-    stages = []
-    for num, line in enumerate(data_from_table_stages):
-        if ':' in line:
-            processed_line = line.replace("\r", '').split(':')[1]
-        else:
-            processed_line = line.replace("\r", '')
+    obj = conflicts.Conflicts(stages=query.get(table_name), controller_type='swarco',)
+    res = obj.calculate_conflicts(add_conflicts_and_binval_calcConflicts=True,
+                                  make_config=True,
+                                  prefix_for_new_file='Nnnnew',
+                                  path_to_txt_conflicts=r'toolkit\tmp\conf2.txt',
+                                  path_to_config_file=r'toolkit\tmp\CO135.DAT')
+    #
 
-        processed_line = processed_line.split(',')
+    # sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, conflict_groups_F992, \
+    #     binary_val_swarco_for_write_PTC2, binary_val_swarco_F009 = sdp_func_lib.calculate_conflicts(
+    #     stages=stages,
+    #     controller_type='swarco',
+    #     add_conflicts_and_binval_calcConflicts=True
+    # )
 
-        print(f'processed_line: {processed_line}')
-        stages.append(processed_line)
-
-    print(data_from_table_stages)
-    print(stages)
-
-    sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, conflict_groups_F992, \
-        binary_val_swarco_for_write_PTC2, binary_val_swarco_F009 = sdp_func_lib.calculate_conflicts(
-        stages=stages,
-        controller_type='swarco',
-        add_conflicts_and_binval_calcConflicts=True
-    )
-
-    print(f'sorted_stages: {sorted_stages}')
-    print(f'kolichestvo_napr: {kolichestvo_napr}')
-    print(f'matrix_output: {matrix_output}')
-    print(f'matrix_swarco_F997: {matrix_swarco_F997}')
-    print(f'conflict_groups_F992: {conflict_groups_F992}')
-    print(f'binary_val_swarco_for_write_PTC2: {binary_val_swarco_for_write_PTC2}')
-    print(f'binary_val_swarco_F009: {binary_val_swarco_F009}')
+    print(f'sorted_stages: {obj.sorted_stages}')
+    print(f'kolichestvo_napr: {obj.kolichestvo_napr}')
+    print(f'matrix_output: {obj.matrix_output}')
+    print(f'matrix_swarco_F997: {obj.matrix_swarco_F997}')
+    print(f'conflict_groups_F992: {obj.conflict_groups_F992}')
+    print(f'binary_val_swarco_for_write_PTC2: {obj.binary_val_swarco_for_write_PTC2}')
+    print(f'binary_val_swarco_F009: {obj.binary_val_swarco_F009}')
+    print(f'res: {res}')
 
     data = {
         'menu_header': menu_header,
         'title': title,
         'render_conflicts_data': True,
         'values': ('| K|', '| O|'),
-        'matrix': matrix_output,
-        'sorted_stages': sorted_stages,
-        'kolichestvo_napr': kolichestvo_napr,
-        'matrix_swarco_F997': matrix_swarco_F997,
-        'conflict_groups_F992': conflict_groups_F992,
-        'binary_val_swarco_F009': binary_val_swarco_F009,
+        'matrix': obj.matrix_output,
+        'sorted_stages': obj.sorted_stages,
+        'kolichestvo_napr': obj.kolichestvo_napr,
+        'matrix_swarco_F997': obj.matrix_swarco_F997,
+        'conflict_groups_F992': obj.conflict_groups_F992,
+        'binary_val_swarco_F009': obj.binary_val_swarco_F009,
     }
 
     return render(request, 'toolkit/calc_conflicts.html', context=data)
