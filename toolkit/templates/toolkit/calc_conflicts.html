@@ -3,53 +3,43 @@
 {% block content %}
 <h2>{{ title }}</h2>
 
-Пример расчета конфликтов##
-<p> Фазы-направления </p>
-<form action="" method="POST" enctype="multipart/form-data">
+<h3>Пример расчета конфликтов##</h3>
+<br><br>
+
+<form class="calc_conflicts" action="" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
-    <table>
-        <tr>
-            <td>Тип контроллера: </td>
-            <td>
-                <input type="radio" value="undefind" name="controller_type" checked id="undefind"> Не выбрано
-                <input type="radio" value="swarco" name="controller_type" id="swarco"> Swarco
-                <input type="radio" value="peek" name="controller_type" id="peek"> Peek                   
-            </td>
-        </tr>
-    </table>
+    <div class="calc_conflicts" id="controllers">
+        <label class="calc_conflicts_controllers" for="controllers" id="testtt"> Тип ДК: </label>
+        <input type="radio" value="undefind" name="controller_type" checked id="undefind"> Без типа
+        <input type="radio" value="swarco" name="controller_type" id="swarco"> Swarco
+        <input type="radio" value="peek" name="controller_type" id="peek"> Peek    
+    </div>
+    <br><br>
 
     <fieldset>
         <legend> Опции </legend>
-        <table>
-            <tr>                
-                <td><input type="checkbox" name="create_txt" id="createtxt"></td>
-                <td>Создать txt файл с конфликтами</td>
-            </tr>
-        </table>
-        <table>
-            <tr>
-                <td><input type="checkbox" name="binval_swarco" id="binval_swarco"></td>
-                <td>Бинарные значения фаз для swarco</td>
-            </tr>
-        </table>
-        <table>
-            <tr>
-                <td><input type="checkbox" name="binval_swarco" id="binval_swarco"></td>
-                <td>Создать файл конфигурации</td>
-            </tr>
-        </table>
-
+        <div>           
+            <input type="checkbox" name="create_txt" id="create_txt">
+            <label class="calc_conflicts_optinos" for="create_txt"> Создать txt файл с конфликтами: </label>
+        </div>
+        <div>
+            <input type="checkbox" name="binval_swarco" id="binval_swarco">
+            <label class="calc_conflicts_optinos" for="binval_swarco"> Матрица конфликтов и бинарные значения фаз для swarco</label>            
+        </div>
+        <div>
+            <input type="checkbox" name="make_config" id="make_config">
+            <label class="calc_conflicts_optinos" for="make_config"> Создать файл конфигурации: </label>            
+        </div>
     </fieldset>
-    <!-- <p> Опции </p> -->
-    <!-- <label class="calc_conflicts" for="createtxt">Создать txt файл с конфликтами</label>
-    <input type="checkbox" name="create txt" id="createtxt"><br>
-    <label class="calc_conflicts" for="controller_type">Тип контроллера</label>
-    <input type="checkbox" name="create txt" id="createtxt"><br> -->
-    <textarea rows="8" name="table_stages"></textarea>
+    <br><br>
+    <p> Фазы-направления </p>
+    <textarea required rows="8" cols="20" minlength="4" maxlength="600" name="table_stages"></textarea>
     <p></p>
     <button type="submit"> Отправить </button>
 </form>
 
+
+{% comment %} Вывод данных после расчета конфликтов {% endcomment %}
 
 {% if render_conflicts_data %}
 {% for line in sorted_stages %}
@@ -119,7 +109,6 @@
 <br>
 
 {% endif %}
-
 
 
 {% endblock %}

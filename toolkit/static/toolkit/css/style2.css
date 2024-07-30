@@ -85,4 +85,15 @@ nav ul li:hover > ul {
 }
 
 
+h1 {
+  text-align: center;
+  color: red;
+  font-size: 30px;
+  margin: 0 0 14px 0;
+  padding: auto;
+  border-bottom: 1px solid;
+}
 
+.calc_conflicts_optinos {
+order: 0;
+}

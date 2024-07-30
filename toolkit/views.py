@@ -7,6 +7,7 @@ from django.http import QueryDict
 from django.urls import reverse
 from django.template.loader import render_to_string
 
+from toolkit.forms_app import CreateConflictForm
 from toolkit.models import TrafficLightObjects
 from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts
 
@@ -228,17 +229,26 @@ def page_not_found(request, exception):
 
 
 def data_for_calc_conflicts(request):
-    table_name = 'table_stages'
-    query = request.POST
-    print(f'query: {query}')
+    name_textarea = 'table_stages'
+    query_post = request.POST
+    print(f'query: {query_post}')
+    form = CreateConflictForm()
 
+    title = 'Расчёт конфликтов'
 
-    title = 'Расчёт концликтов'
-
-    if not sdp_func_lib.check_query(query, table_name):
-        print(f'table_stages: {query.get(table_name)}')
-        data = {'render_conflicts_data': False, 'menu_header': menu_header,'title': title}
+    if request.POST:
+        py_dict = request.POST.dict()
+        print(f'py_dict: {py_dict}')
+    else:
+        data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title}
         return render(request, 'toolkit/calc_conflicts.html', context=data)
+
+    title = 'Расчёт конфликтов'
+
+    # if not sdp_func_lib.check_query(query_post, table_name):
+    #     print(f'table_stages: {query_post.get(table_name)}')
+    #     data = {'render_conflicts_data': False, 'menu_header': menu_header,'title': title}
+    #     return render(request, 'toolkit/calc_conflicts.html', context=data)
 
     # print(f'req_GET: {query}')
     # print(f'{query.get(table_name).strip()}: {query.get(table_name).strip()}')
@@ -272,18 +282,24 @@ def data_for_calc_conflicts(request):
     #
     # print(data_from_table_stages)
     # print(stages)
+    print(f'py_dict.get("controller_type"): {py_dict.get("controller_type")}')
+    print(f'py_dict.get("controller_type"): {py_dict.get("controller_type")}')
 
-    print(f'query: {query}')
+    controller_type = py_dict.get('controller_type').lower()
+    if 'create_txt' in py_dict:
+        pass
 
 
     obj = conflicts.Conflicts()
-    res = obj.calculate_conflicts(input_stages=query.get(table_name),
-                                  controller_type='swarco',
-                                  add_conflicts_and_binval_calcConflicts=True,
-                                  make_config=True,
-                                  prefix_for_new_file='Nnnnew',
-                                  path_to_txt_conflicts=r'toolkit\tmp\conf2.txt',
-                                  path_to_config_file=r'toolkit\tmp\CO135.DAT')
+    res, msg = obj.calculate_conflicts(input_stages=query_post.get(name_textarea),
+                                       controller_type=controller_type,
+                                       add_conflicts_and_binval_calcConflicts=True,
+                                       make_config=False,
+                                       prefix_for_new_config_file='Nnnnew',
+                                       path_to_txt_conflicts=r'toolkit\tmp\conf2.txt',
+                                       path_to_config_file=r'toolkit\tmp\CO135.DAT')
+
+    print(f'res: {res}: msg {msg}')
     #
 
     # sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, conflict_groups_F992, \
