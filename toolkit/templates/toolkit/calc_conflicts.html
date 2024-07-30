@@ -5,7 +5,46 @@
 
 Пример расчета конфликтов##
 <p> Фазы-направления </p>
-<form>
+<form action="" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <table>
+        <tr>
+            <td>Тип контроллера: </td>
+            <td>
+                <input type="radio" value="undefind" name="controller_type" checked id="undefind"> Не выбрано
+                <input type="radio" value="swarco" name="controller_type" id="swarco"> Swarco
+                <input type="radio" value="peek" name="controller_type" id="peek"> Peek                   
+            </td>
+        </tr>
+    </table>
+
+    <fieldset>
+        <legend> Опции </legend>
+        <table>
+            <tr>                
+                <td><input type="checkbox" name="create_txt" id="createtxt"></td>
+                <td>Создать txt файл с конфликтами</td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td><input type="checkbox" name="binval_swarco" id="binval_swarco"></td>
+                <td>Бинарные значения фаз для swarco</td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td><input type="checkbox" name="binval_swarco" id="binval_swarco"></td>
+                <td>Создать файл конфигурации</td>
+            </tr>
+        </table>
+
+    </fieldset>
+    <!-- <p> Опции </p> -->
+    <!-- <label class="calc_conflicts" for="createtxt">Создать txt файл с конфликтами</label>
+    <input type="checkbox" name="create txt" id="createtxt"><br>
+    <label class="calc_conflicts" for="controller_type">Тип контроллера</label>
+    <input type="checkbox" name="create txt" id="createtxt"><br> -->
     <textarea rows="8" name="table_stages"></textarea>
     <p></p>
     <button type="submit"> Отправить </button>

@@ -229,7 +229,7 @@ def page_not_found(request, exception):
 
 def data_for_calc_conflicts(request):
     table_name = 'table_stages'
-    query = request.GET
+    query = request.POST
     print(f'query: {query}')
 
 
