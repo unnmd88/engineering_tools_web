@@ -286,17 +286,22 @@ def data_for_calc_conflicts(request):
     print(f'py_dict.get("controller_type"): {py_dict.get("controller_type")}')
 
     controller_type = py_dict.get('controller_type').lower()
-    if 'create_txt' in py_dict:
-        pass
+    make_txt_conflicts = True if 'create_txt' in py_dict else False
+    add_conflicts_and_binval_calcConflicts = True if 'binval_swarco' in py_dict else False
+    make_config = True if 'make_config' in py_dict else False
+    stages = query_post.get(name_textarea)
+
+    print(f'make_txt_conflicts views: {make_txt_conflicts}')
 
 
     obj = conflicts.Conflicts()
-    res, msg = obj.calculate_conflicts(input_stages=query_post.get(name_textarea),
+    res, msg = obj.calculate_conflicts(input_stages=stages,
                                        controller_type=controller_type,
-                                       add_conflicts_and_binval_calcConflicts=True,
-                                       make_config=False,
+                                       make_txt_conflicts=make_txt_conflicts,
+                                       add_conflicts_and_binval_calcConflicts=add_conflicts_and_binval_calcConflicts,
+                                       make_config=make_config,
                                        prefix_for_new_config_file='Nnnnew',
-                                       path_to_txt_conflicts=r'toolkit\tmp\conf2.txt',
+                                       path_to_txt_conflicts=r'toolkit\tmp\crrrnfl_.txt',
                                        path_to_config_file=r'toolkit\tmp\CO135.DAT')
 
     print(f'res: {res}: msg {msg}')
@@ -309,7 +314,7 @@ def data_for_calc_conflicts(request):
     #     add_conflicts_and_binval_calcConflicts=True
     # )
 
-    print(f'odj__dict__: {obj.result_num_kolichestvo_napr}')
+    print(f'obj.result_num_kolichestvo_napr: {obj.result_num_kolichestvo_napr}')
     print(f'sorted_stages: {obj.sorted_stages}')
     print(f'kolichestvo_napr: {obj.kolichestvo_napr}')
     print(f'matrix_output: {obj.matrix_output}')
@@ -317,12 +322,13 @@ def data_for_calc_conflicts(request):
     print(f'conflict_groups_F992: {obj.conflict_groups_F992}')
     print(f'binary_val_swarco_for_write_PTC2: {obj.binary_val_swarco_for_write_PTC2}')
     print(f'binary_val_swarco_F009: {obj.binary_val_swarco_F009}')
-    print(f'res: {res}')
+
 
     data = {
         'menu_header': menu_header,
         'title': title,
-        'render_conflicts_data': True,
+        'render_conflicts_data': res,
+        'add_conflicts_and_binval_calcConflicts': add_conflicts_and_binval_calcConflicts,
         'values': ('| K|', '| O|'),
         'matrix': obj.matrix_output,
         'sorted_stages': obj.sorted_stages,

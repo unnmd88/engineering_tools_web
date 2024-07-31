@@ -559,6 +559,7 @@ class Conflicts:
         self.input_stages = input_stages
         self.controller_type = controller_type
         self.make_config = make_config
+        print(f'make_txt_conflicts from func:: {make_txt_conflicts}')
 
         # Служебная проверка типа данных в input_stages
         if isinstance(self.input_stages, str):
@@ -590,12 +591,6 @@ class Conflicts:
 
         self.make_number_coflicts_group_for_swarco_F992()
 
-        # if add_conflicts_and_binval_calcConflicts or make_config and self.controller_type == 'swarco':
-        #     self.result_make_txt = self.write_conflicts_to_txt_file(path_and_name_for_txt_conflicts=path_to_txt_conflicts,
-        #                                                             conflicts_and_binVal_swarco=True,)
-        # else:
-        #     self.result_make_txt = self.write_conflicts_to_txt_file(path_and_name_for_txt_conflicts=path_to_txt_conflicts)
-
         if not make_txt_conflicts and not make_config:
             self.result_only_matrix_and_tables = [True, self.msg_success_make_only_data_matrix]
             return self.result_only_matrix_and_tables
@@ -604,7 +599,7 @@ class Conflicts:
             self.write_conflicts_to_txt_file(
                 path_and_name_for_txt_conflicts=path_to_txt_conflicts,
                 conflicts_and_binVal_swarco=add_conflicts_and_binval_calcConflicts,)
-            print(self.result_make_txt)
+            print(f'self.result_make_txt: {self.result_make_txt}')
 
         if make_config:
             if self.controller_type == self.available_controller_types[0]:
@@ -630,16 +625,12 @@ class Conflicts:
         else:
             return False, 'ERROR!'  # Программная ошибка(Оставил, пока на этапе отладки)
 
-
-
-
     def write_conflicts_to_txt_file(self, path_and_name_for_txt_conflicts=None, conflicts_and_binVal_swarco=False):
         """Функция производит запись вычесленных ранее ""Матрица конфликтов "интергрин" F997",
            "Физические конфликты - номера конфликтных групп F992", "Сигнальные группы в фазах F009"(бинарные значения)
            в файл по указанному пользевателем каталогу
-
-        :return bool -> True, если файл с конфликтами создан, иначе False
-        :return str -> Ошибка из except
+        :param path_and_name_for_txt_conflicts -> пусть к текстовому файлу, который будет создан
+        :param conflicts_and_binVal_swarco -> флаг для включения в текстовый файл конфликтов и значений для swarco
 
         """
         # Запись значений в файл
@@ -669,36 +660,38 @@ class Conflicts:
                     file.write(f'{" ".join(self.matrix_output[stroka_napravleine])}\n')
                 file.write('\n')
 
-                if not conflicts_and_binVal_swarco:
-                    return True
-                # Запишем в файл "Матрица конфликтов "интергрин" F997"
-                file.write('Матрица конфликтов "интергрин" F997:\n')
-                for num_napravleniya in self.matrix_swarco_F997:
-                    for stroka_napravlenie in num_napravleniya:
-                        file.write(stroka_napravlenie)
+                if conflicts_and_binVal_swarco:
+                    # Запишем в файл "Матрица конфликтов "интергрин" F997"
+                    file.write('Матрица конфликтов "интергрин" F997:\n')
+                    for num_napravleniya in self.matrix_swarco_F997:
+                        for stroka_napravlenie in num_napravleniya:
+                            file.write(stroka_napravlenie)
+                        file.write('\n')
                     file.write('\n')
-                file.write('\n')
 
-                # Запишем в файл "Физические конфликты - номера конфликтных групп F992"
-                file.write('Физические конфликты - номера конфликтных групп F992:\n')
-                for num_napravleniya in self.conflict_groups_F992:
-                    for stroka_napravlenie in num_napravleniya:
-                        file.write(stroka_napravlenie)
+                    # Запишем в файл "Физические конфликты - номера конфликтных групп F992"
+                    file.write('Физические конфликты - номера конфликтных групп F992:\n')
+                    for num_napravleniya in self.conflict_groups_F992:
+                        for stroka_napravlenie in num_napravleniya:
+                            file.write(stroka_napravlenie)
+                        file.write('\n')
                     file.write('\n')
-                file.write('\n')
 
-                # Запишем в файл "Сигнальные группы в фазах F009"(,бинарные значения)
-                file.write('Сигнальные группы в фазах F009: \n')
-                for num_napravleniya in self.binary_val_swarco_F009:
-                    for val in num_napravleniya:
-                        file.write(val)
-                if os.path.exists(path_and_name_for_txt_conflicts):
-                    self.result_make_txt = [True, self.msg_success_make_txt_file_with_conflicts]
-                else:
-                    self.result_make_txt = [True, self.msg_error_make_txt_file_with_conflicts]
+                    # Запишем в файл "Сигнальные группы в фазах F009"(,бинарные значения)
+                    file.write('Сигнальные группы в фазах F009: \n')
+                    for num_napravleniya in self.binary_val_swarco_F009:
+                        for val in num_napravleniya:
+                            file.write(val)
         except Exception as err: # определить какую ошибку ловишь
+            print(f'Exception: {err}')
             pass #что-то делать
             return err # например
+
+        if os.path.exists(path_and_name_for_txt_conflicts):
+            self.result_make_txt = [True, self.msg_success_make_txt_file_with_conflicts]
+        else:
+            self.result_make_txt = [False, self.msg_error_make_txt_file_with_conflicts]
+
 
     def make_PTC2_file(self, path_to_original_PTC2, prefix_for_new_file: str, ):
         """

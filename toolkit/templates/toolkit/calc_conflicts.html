@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <h2>{{ title }}</h2>
@@ -9,7 +10,7 @@
 <form class="calc_conflicts" action="" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="calc_conflicts" id="controllers">
-        <label class="calc_conflicts_controllers" for="controllers" id="testtt"> Тип ДК: </label>
+        <label class="calc_conflicts_controllers" id="testtt"> Тип ДК: </label>
         <input type="radio" value="undefind" name="controller_type" checked id="undefind"> Без типа
         <input type="radio" value="swarco" name="controller_type" id="swarco"> Swarco
         <input type="radio" value="peek" name="controller_type" id="peek"> Peek    
@@ -23,12 +24,13 @@
             <label class="calc_conflicts_optinos" for="create_txt"> Создать txt файл с конфликтами: </label>
         </div>
         <div>
-            <input type="checkbox" name="binval_swarco" id="binval_swarco">
+            <input type="checkbox" name="binval_swarco" id="binval_swarco" disabled>
             <label class="calc_conflicts_optinos" for="binval_swarco"> Матрица конфликтов и бинарные значения фаз для swarco</label>            
         </div>
         <div>
-            <input type="checkbox" name="make_config" id="make_config">
-            <label class="calc_conflicts_optinos" for="make_config"> Создать файл конфигурации: </label>            
+            <input type="checkbox" name="make_config" id="make_config" disabled>
+            <label class="calc_conflicts_optinos" for="make_config"> Создать файл конфигурации: </label>
+            <input type="file" id="config_file" name="upload_config_file" multiple disabled>            
         </div>
     </fieldset>
     <br><br>
@@ -78,7 +80,12 @@
 </table>
 <br>
 
+{% endif %}
+
 {% comment %} Вывод матрицы конфликтов "интергрин" F997 {% endcomment %}
+
+{% if add_conflicts_and_binval_calcConflicts %}
+
 <b>Матрица конфликтов "интергрин" F997:</b>
 <br>
 {% for line in matrix_swarco_F997 %}
@@ -109,6 +116,6 @@
 <br>
 
 {% endif %}
-
-
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="{% static 'toolkit/js/toolkit_conflicts.js'%}"></script>
 {% endblock %}
