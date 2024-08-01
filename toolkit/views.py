@@ -45,6 +45,10 @@ controllers_menu = [
 ]
 
 
+path_tmp = 'toolkit/tmp/'
+path_uploads = 'toolkit/uploads/'
+
+
 def get_snmp_ajax(request, num_host):
     print(f'request.GET: {request.GET}')
 
@@ -223,6 +227,11 @@ def calc_cyc(request):
 #         uri = reverse('tabs_slug', args=('test', ))
 #         return HttpResponseRedirect('/')
 
+def upload_file(file):
+    with open(f'{path_tmp}{file.name}', 'wb+') as f:
+        for chunk in file.chunks():
+            f.write(chunk)
+
 
 def page_not_found(request, exception):
     return HttpResponseNotFound("<h1> Страница не найдена </h1>")
@@ -232,66 +241,32 @@ def data_for_calc_conflicts(request):
     name_textarea = 'table_stages'
     query_post = request.POST
     print(f'query: {query_post}')
-    form = CreateConflictForm()
+    print(f'request.FILES: {request.FILES}')
+
 
     title = 'Расчёт конфликтов'
 
     if request.POST:
         py_dict = request.POST.dict()
         print(f'py_dict: {py_dict}')
+        files_dict = request.FILES.dict()
+        print(f'files_dict: {files_dict}')
+        if 'upload_config_file' in files_dict:
+            upload_file(files_dict.get('upload_config_file'))
+
     else:
         data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title}
         return render(request, 'toolkit/calc_conflicts.html', context=data)
 
-    title = 'Расчёт конфликтов'
 
-    # if not sdp_func_lib.check_query(query_post, table_name):
-    #     print(f'table_stages: {query_post.get(table_name)}')
-    #     data = {'render_conflicts_data': False, 'menu_header': menu_header,'title': title}
-    #     return render(request, 'toolkit/calc_conflicts.html', context=data)
-
-    # print(f'req_GET: {query}')
-    # print(f'{query.get(table_name).strip()}: {query.get(table_name).strip()}')
-    # data_from_table_stages = query.get(table_name).split('\n')
-    # print(f'data_from_table_stages: {data_from_table_stages}')
-    #
-    # stages = []
-    # for num, line in enumerate(data_from_table_stages):
-    #     if ':' in line:
-    #         processed_line = line.replace("\r", '').split(':')[1]
-    #     else:
-    #         processed_line = line.replace("\r", '')
-    #
-    #     processed_line = processed_line.replace(" ", '')
-    #
-    #     print(f'processed_line до split ",": {processed_line}')
-    #
-    #
-    #
-    #
-    #     processed_line = processed_line.split(',')
-    #     # Проверка корректности введенных данных
-    #     for char in processed_line:
-    #         if not char.isdigit():
-    #             raise ValueError
-    #
-    #
-    #
-    #     print(f'processed_line: {processed_line}')
-    #     stages.append(processed_line)
-    #
-    # print(data_from_table_stages)
-    # print(stages)
-    print(f'py_dict.get("controller_type"): {py_dict.get("controller_type")}')
     print(f'py_dict.get("controller_type"): {py_dict.get("controller_type")}')
 
     controller_type = py_dict.get('controller_type').lower()
     make_txt_conflicts = True if 'create_txt' in py_dict else False
     add_conflicts_and_binval_calcConflicts = True if 'binval_swarco' in py_dict else False
     make_config = True if 'make_config' in py_dict else False
+    path_to_config_file = f'{path_tmp}{files_dict.get("upload_config_file")}' if 'upload_config_file' in files_dict else False
     stages = query_post.get(name_textarea)
-
-    print(f'make_txt_conflicts views: {make_txt_conflicts}')
 
 
     obj = conflicts.Conflicts()
@@ -300,9 +275,9 @@ def data_for_calc_conflicts(request):
                                        make_txt_conflicts=make_txt_conflicts,
                                        add_conflicts_and_binval_calcConflicts=add_conflicts_and_binval_calcConflicts,
                                        make_config=make_config,
-                                       prefix_for_new_config_file='Nnnnew',
-                                       path_to_txt_conflicts=r'toolkit\tmp\crrrnfl_.txt',
-                                       path_to_config_file=r'toolkit\tmp\CO135.DAT')
+                                       prefix_for_new_config_file='New_',
+                                       path_to_txt_conflicts=r'toolkit/tmp/crrrnfl_.txt',
+                                       path_to_config_file=path_to_config_file)
 
     print(f'res: {res}: msg {msg}')
     #

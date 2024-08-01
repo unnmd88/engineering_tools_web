@@ -42,3 +42,43 @@ $('#config_file').click( function (){
   }
 
 });
+
+
+// Проверка валидности введенных/заполненных данных
+$("form").submit(function () {
+  const text_area = {
+    text: $('#stages_from_area').val(),
+    lines: $('#stages_from_area').val().split('\n'),
+    num_lines: $('#stages_from_area').val().split('\n').length,
+  };
+
+  console.log(text_area);
+  console.log(text_area.text);
+  console.log(text_area.lines);
+  console.log(text_area.num_lines);
+
+  if (text_area.num_lines < 2) {
+    alert('Количество фаз не может быть менее 2');
+    return false;
+  }
+
+  if ($('#make_config').is(':checked')) {
+    let file_name = $('#config_file')[0].files[0].name;
+    console.log(file_name);
+    if (!$('#config_file').val()){
+      alert('Вы не выбрали файл конфигурации');
+      return false;
+    }
+    else if ($('#swarco').is(':checked') && file_name.slice(-5).toUpperCase() != '.PTC2'){
+      alert('Вы выбрали неверный формат файла конфигурации для Swarco');
+      return false;
+    }
+    else if ($('#peek').is(':checked') && file_name.slice(-4).toUpperCase() != '.DAT'){
+      alert('Вы выбрали неверный формат файла конфигурации для Peek');
+      return false;
+    }
+  }
+  
+});
+
+
