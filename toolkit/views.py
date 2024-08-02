@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 
 from toolkit.forms_app import CreateConflictForm
-from toolkit.models import TrafficLightObjects
+from toolkit.models import TrafficLightObjects, UploadFiles2
 from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts
 
 menu_header = [
@@ -238,6 +238,46 @@ def page_not_found(request, exception):
 
 
 def data_for_calc_conflicts(request):
+    title = 'Расчёт конфликтов'
+    upload_name_id = 'upload_config_file'
+
+
+
+    if request.GET or not request.FILES:
+        data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title}
+
+        return render(request, 'toolkit/calc_conflicts.html', context=data)
+
+    print(f'request.FILES: {request.FILES}')
+
+    filename = request.FILES.get(upload_name_id).name
+    print(f'request.FILES: {filename}')
+    print(f'request.FILES: {type(filename)}')
+    if filename[-4:] == 'PTC2':
+        id_for_db = 1
+    elif filename[-3:] == 'DAT':
+        id_for_db = 2
+    else:
+        id_for_db = 3
+
+    obj = UploadFiles2.objects.create(file=filename, group=id_for_db)
+    
+
+    # fp = UploadFiles2(file=filename, group=id_for_db)
+    # fp.save()
+
+    all_files = UploadFiles2.objects.all()
+
+    for f in all_files:
+        print(f'file: {f.file}')
+        print(f'file: {f.file.url}')
+
+    data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title, 'all_files': all_files}
+
+    return render(request, 'toolkit/calc_conflicts.html', context=data)
+
+
+
     name_textarea = 'table_stages'
     query_post = request.POST
     print(f'query: {query_post}')
@@ -318,7 +358,13 @@ def data_for_calc_conflicts(request):
 
 def controller_swarco(request):
     data = {'title': 'Swarco', 'menu_header': menu_header}
-    return render(request, 'toolkit/swarco.html', context=data, )
+
+    content = render_to_string('toolkit/swarco.html', data, request)
+
+    return HttpResponse(content, )
+
+
+    return render(request, 'toolkit/swarco.html', context=data, content_type='application/force-download')
 
 
 def controller_peek(request):

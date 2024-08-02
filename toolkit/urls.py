@@ -1,4 +1,7 @@
+from django.conf.urls.static import static
 from django.urls import path, re_path, register_converter
+
+from engineering_tools import settings
 from . import views
 from . import converters
 
@@ -33,3 +36,7 @@ urlpatterns = [
     # path("archive/<year4:year>/", views.archive, name='archive'),
 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

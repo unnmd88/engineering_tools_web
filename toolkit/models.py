@@ -21,3 +21,9 @@ class TrafficLightObjects(models.Model):
             models.Index(fields=['-time_create'])
         ]
 
+
+class UploadFiles2(models.Model):
+    file = models.FileField(upload_to='tmp2/', null=True, verbose_name='config_file')
+    time_create = models.DateTimeField(auto_now_add=True)
+    group = models.IntegerField()
+

@@ -7,16 +7,6 @@
 <h3>Пример расчета конфликтов##</h3>
 <br><br>
 
-
-{% for file in all_files %}
-<!-- <p> {{ file.file.name }} </p> -->
-
-<a href="{{ file.file.url }}"> FF# </a>
-
-
-
-{% endfor %}
-
 <form class="calc_conflicts" action="" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="calc_conflicts" id="controllers">
@@ -49,11 +39,6 @@
     <p></p>
     <button type="submit" id="send_conflicts_data"> Отправить </button>
 </form>
-
-
-
-
-
 
 
 {% comment %} Вывод данных после расчета конфликтов {% endcomment %}
