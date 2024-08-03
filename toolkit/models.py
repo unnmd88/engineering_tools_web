@@ -23,7 +23,19 @@ class TrafficLightObjects(models.Model):
 
 
 class UploadFiles2(models.Model):
-    file = models.FileField(upload_to='tmp2/', null=True, verbose_name='config_file')
+    status_file = models.CharField(max_length=20)
+    file = models.FileField(upload_to='conflicts/configs/', null=True, verbose_name='config_file')
     time_create = models.DateTimeField(auto_now_add=True)
     group = models.IntegerField()
 
+    def __repr__(self):
+        return self.file.name
+
+
+class SaveConflictsTXT(models.Model):
+    status_file = models.CharField(max_length=20)
+    file = models.FileField(upload_to='conflicts/txt/', null=True, verbose_name='txt_files')
+    time_create = models.DateTimeField(auto_now_add=True)
+
+    def __repr__(self):
+        return self.file.name

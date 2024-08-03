@@ -1,5 +1,5 @@
 import os
-from functools import reduce
+from datetime import datetime as dt
 
 
 def calculate_conflicts(stages=None, name_for_txt_conflicts=None, path_to_config_file=None,
@@ -161,7 +161,7 @@ class Conflicts:
 
 
 
-    def __init__(self, stages=None, controller_type=None, numCO=None):
+    def __init__(self, controller_type=None, numCO=None):
         """
             Attributes:
                 |--- matrix_swarco_F997 - > матрица конфликтов для F997 swarco
@@ -352,35 +352,10 @@ class Conflicts:
             Значения в списке - направления, участвующие в фазе
         """
 
-        # if self.input_stages is None or len(self.input_stages) > 255:
-        #     return
-        # self.sorted_stages = self.input_stages
-        #
-        # kolichestvo_naptavleniy = 0
-        # for i in range(len(self.sorted_stages)):
-        #     try:
-        #         if self.sorted_stages[i][0].replace(' ', '') != '':
-        #             self.sorted_stages[i] = list(map(int, self.sorted_stages[i]))
-        #             max_num_napr_v_faze = max(self.sorted_stages[i])
-        #             if kolichestvo_naptavleniy < max_num_napr_v_faze:
-        #                 kolichestvo_naptavleniy = max_num_napr_v_faze
-        #             self.sorted_stages[i] = sorted(list(set(self.sorted_stages[i])))
-        #         else:
-        #             self.sorted_stages[i] = []
-        #     except ValueError as err:
-        #         return err
-        #
-        # self.kolichestvo_napr = kolichestvo_naptavleniy
-        # return
 
-
-
-
-        # Новый вариант, с проверкой
         self.sorted_stages = []
         self.kolichestvo_napr = 0
 
-        # stages_tmp = self.input_stages.split('\n')
         print(f'stages из метода, начало алгоритма сортировки: {stages}')
         for line in stages:
             if ':' in line:
@@ -536,8 +511,9 @@ class Conflicts:
 
 
 
-    def calculate_conflicts(self, path_to_txt_conflicts='Calculate conflicts.txt',
-                            path_to_config_file=None, prefix_for_new_config_file='new_',
+    def calculate_conflicts(self,
+                            path_to_txt_conflicts=f'media/сalculated_conflicts{dt.now().strftime("%d %b %Y %H_%M_%S")}.txt',
+                            path_to_config_file=None, prefix_for_new_config_file='calculated_',
                             add_conflicts_and_binval_calcConflicts=False,
                             make_txt_conflicts=False,
                             make_config=False,
@@ -751,9 +727,9 @@ class Conflicts:
                     elif not flag1 and not flag2 and not flag3 and not flag4:
                         new_file.write(line)
                 if os.path.exists(path_to_new_PTC2):
-                    self.result_make_config = [True, self.msg_success_make_config]
+                    self.result_make_config = [True, self.msg_success_make_config, path_to_new_PTC2]
                 else:
-                    self.result_make_config = [True, self.msg_success_make_config]
+                    self.result_make_config = [False, self.msg_error_make_config]
         except Exception as err:  # определить какую ошибку ловишь
             pass  # что-то делать
 
