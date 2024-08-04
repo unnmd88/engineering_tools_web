@@ -15,3 +15,8 @@ str1 = 'C:\Programms\py.projects\django_engineering_toolkit\engineering_tools\me
 str1 = reverse_slashes(str1)
 
 print(str1 .split('media/'))
+
+rr = [True, 'True', 1, 2, 3]
+
+x, y, *rest = rr
+print(x, y, *rest)

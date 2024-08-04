@@ -35,8 +35,11 @@
         </div>
     </fieldset>
     <br><br>
-    {% if render_conflicts_data %}
+    {% if render_conflicts_data and create_link_config %}
     <a href="{{ config_file.file.url }}"> Скачать конфиг </a><br>
+    {% endif %}
+
+    {% if render_conflicts_data and create_link_txt_conflicts %}
     <a href="{{ txt_conflict_file.file.url }}" download> Скачать текстовый файл конфликтов </a><br>
     {% endif %}
 

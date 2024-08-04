@@ -39,7 +39,7 @@ class ProcessingDataConflicts:
         filename = file.name
         print(f'request.FILES: {filename}')
         print(f'request.FILES: {type(filename)}')
-        id_for_db = Common.make_id(filename)
+        id_for_db = Common.make_group_name(filename)
         # fp = UploadFiles2(file=file, group=id_for_db, status_file='source')
         # fp.save()
         obj = UploadFiles2(file=file, group=id_for_db, status_file='source')

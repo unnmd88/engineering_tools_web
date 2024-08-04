@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 
@@ -22,18 +23,18 @@ class TrafficLightObjects(models.Model):
         ]
 
 
-class UploadFiles2(models.Model):
-    status_file = models.CharField(max_length=20)
+class SaveConfigFiles(models.Model):
+    source = models.CharField(max_length=20)
     file = models.FileField(upload_to='conflicts/configs/', null=True, verbose_name='config_file')
-    time_create = models.DateTimeField(auto_now_add=True)
-    group = models.IntegerField()
+    time_create = models.DateTimeField(default=timezone.now)
+    controller_type = models.CharField(max_length=20, db_index=True, default='undefind')
 
     def __repr__(self):
         return self.file.name
 
 
 class SaveConflictsTXT(models.Model):
-    status_file = models.CharField(max_length=20)
+    source = models.CharField(max_length=20)
     file = models.FileField(upload_to='conflicts/txt/', null=True, verbose_name='txt_files')
     time_create = models.DateTimeField(auto_now_add=True)
 

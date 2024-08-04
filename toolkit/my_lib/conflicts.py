@@ -396,7 +396,7 @@ class Conflicts:
 
 
     def calculate_conflicts(self,
-                            path_to_txt_conflicts=f'media/сalculated_conflicts{dt.now().strftime("%d %b %Y %H_%M_%S")}.txt',
+                            path_to_txt_conflicts=f'сalculated_conflicts{dt.now().strftime("%d %b %Y %H_%M_%S")}.txt',
                             path_to_config_file=None, prefix_for_new_config_file='calculated_',
                             add_conflicts_and_binval_calcConflicts=False,
                             make_txt_conflicts=False,
@@ -495,6 +495,7 @@ class Conflicts:
         :param conflicts_and_binVal_swarco -> флаг для включения в текстовый файл конфликтов и значений для swarco
 
         """
+
         # Запись значений в файл
         try:
             with open(path_and_name_for_txt_conflicts, 'w') as file:
@@ -550,7 +551,7 @@ class Conflicts:
             return err # например
 
         if os.path.exists(path_and_name_for_txt_conflicts):
-            self.result_make_txt = [True, self.msg_success_make_txt_file_with_conflicts]
+            self.result_make_txt = [True, self.msg_success_make_txt_file_with_conflicts, path_and_name_for_txt_conflicts]
         else:
             self.result_make_txt = [False, self.msg_error_make_txt_file_with_conflicts]
 
@@ -619,7 +620,7 @@ class Conflicts:
         except Exception as err:  # определить какую ошибку ловишь
             pass  # что-то делать
 
-    def make_dat_file_for_peek(self, path_to_original_DAT: str, prefix_for_new_file: str = 'new_'):
+    def make_dat_file_for_peek(self, path_to_original_DAT: str, prefix_for_new_file: str,):
         """
         Метод создает новый .DAT файл с рассчитанными конфликтами и фазами
         :param path_to_original_DAT: путь к исходному файлу, на основе которого будет сформирован новый
@@ -698,10 +699,9 @@ class Conflicts:
                         file2.write(line)
 
             if os.path.exists(new_file_dat):
-                result = 'the file was created successfully'
+                self.result_make_config = [True, self.msg_success_make_config, new_file_dat]
             else:
-                result = 'Error: the file was not created'
-            return result
+                self.result_make_config = [False, self.msg_error_make_config]
         except Exception as err:  # определить какую ошибку ловишь
             pass  # что-то делать
             return err  # например

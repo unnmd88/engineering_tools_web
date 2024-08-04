@@ -12,8 +12,9 @@ from django.http import QueryDict
 from django.urls import reverse
 from django.template.loader import render_to_string
 
+from engineering_tools.settings import MEDIA_ROOT, MEDIA_URL, BASE_DIR
 from toolkit.forms_app import CreateConflictForm
-from toolkit.models import TrafficLightObjects, UploadFiles2, SaveConflictsTXT
+from toolkit.models import TrafficLightObjects, SaveConfigFiles, SaveConflictsTXT
 from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts
 
 
@@ -55,34 +56,22 @@ class ProcessedRequestConflicts(ProcessedRequestBase):
     controller_type = 'controller_type'
 
     @staticmethod
-    def make_id(filename: str) -> int:
+    def make_group_name(filename: str) -> str:
         """
         Возвращает id для модели UploadFiles2:
-        swarco: 1
-        peek: 2
-        остальные файлы: 3
+        swarco: swarco
+        peek: peek
+        остальные файлы: undefind
         :param filename: имя файла из коллекции request.FILEES:
-        :return id_for_db -> номер группы(принадлежности)
+        :return id_for_db -> имя группы(принадлежности)
         """
         if filename[-4:] == 'PTC2':
-            id_for_db = 1
+            id_for_db = 'swarco'
         elif filename[-3:] == 'DAT':
-            id_for_db = 2
+            id_for_db = 'peek'
         else:
-            id_for_db = 3
+            id_for_db = 'undefind'
         return id_for_db
-
-    @staticmethod
-    def make_txt_conflicts(path_to_txt_conflicts_tmp=f'сalculated_conflicts {dt.now().strftime("%d %b %Y %H_%M_%S")}.txt'):
-        with open(path_to_txt_conflicts_tmp, 'wb') as file_from_post_req:
-            pass
-        with open(path_to_txt_conflicts_tmp, 'rb') as fw:
-            f = SaveConflictsTXT(status_file='tesT', file=path_to_txt_conflicts_tmp)
-            f.file.save(path_to_txt_conflicts_tmp, File(fw))
-        try:
-            os.remove(path_to_txt_conflicts_tmp)
-        except FileNotFoundError:
-            pass
 
     @staticmethod
     def correct_path(path):
@@ -101,10 +90,6 @@ class ProcessedRequestConflicts(ProcessedRequestBase):
         self.stages = self.post_req_dict.get(self.name_textarea)
 
         print('-' * 25)
-        print(f'self..files_dict: {self.files_dict}')
-        print(f'self..val_make_config: {self.val_make_config}')
-
-
 
         if request.FILES:
             if 'make_config' in self.post_req_dict:
@@ -123,18 +108,18 @@ class ProcessedRequestConflicts(ProcessedRequestBase):
                 print(f'request.FILES2: {request.FILES}')
                 print(f'self..file_from_request: {self.file_from_request}')
                 print(f'self..filename_from_request: {self.filename_from_request}')
-            self.id_group = self.make_id(filename=self.filename_from_request)
+            self.group_name = self.make_group_name(filename=self.filename_from_request)
         else:
             self.val_make_config = False
             self.file_from_request = False
             self.filename_from_request = False
 
 
-        if self.val_txt_conflicts:
-            self.make_txt_conflicts()
-            self.path_to_txt_conflicts = SaveConflictsTXT.objects.last().file.path
-        else:
-            self.path_to_txt_conflicts = None
+        # if self.val_txt_conflicts:
+        #     self.make_txt_conflicts()
+        #     self.path_to_txt_conflicts = SaveConflictsTXT.objects.last().file.path
+        # else:
+        #     self.path_to_txt_conflicts = None
 
 
 
@@ -367,36 +352,22 @@ def page_not_found(request, exception):
 
 def data_for_calc_conflicts(request):
     title = 'Расчёт конфликтов'
-    upload_name_id = 'upload_config_file'
-    name_textarea = 'table_stages'
-    query_post = request.POST
+    print(f'MEDIA_ROOT: {MEDIA_ROOT}')
+    print(f'MEDIA_URL: {MEDIA_URL}')
+    print(f'BASE_DIR: {BASE_DIR}')
 
     if request.GET:
         data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title}
-
         return render(request, 'toolkit/calc_conflicts.html', context=data)
-
-    # obj = ProcessedRequestConflicts(request)
-
-
-
 
     elif request.POST:
         req_data = ProcessedRequestConflicts(request)
-        UploadFiles2.objects.create(file=req_data.file_from_request, group=req_data.id_group, status_file='source')
-        path_to_config_file = UploadFiles2.objects.last().file.path
-
-
-
-        path_to_txt_conflicts = SaveConflictsTXT.objects.last().file.path
-
-        # print('-' * 25)
-        # print(f'objj.files_dict: {objj.files_dict}')
-        # print(f'objj.val_make_config: {objj.val_make_config}')
-        # print(f'objj.file_from_request: {objj.file_from_request}')
-        # print(f'objj.filename_from_request: {objj.filename_from_request}')
-
-
+        if req_data.val_make_config:
+            SaveConfigFiles.objects.create(file=req_data.file_from_request, controller_type=req_data.group_name,
+                                           source='uploaded', )
+            path_to_config_file = SaveConfigFiles.objects.last().file.path
+        else:
+            path_to_config_file = None
 
     else:
         # DEBUG
@@ -404,38 +375,21 @@ def data_for_calc_conflicts(request):
         return render(request, 'toolkit/calc_conflicts.html', context=data)
 
 
-    #
-    # all_files = UploadFiles2.objects.all()
-    # for f in all_files:
-    #     print(f'file: {f.file}')
-    #     print(f'file: {f.file.url}')
-
-
-    # with open(path_to_txt_conflicts_tmp, 'rb') as fw:
-    #     f = SaveConflictsTXT(status_file='tesT', file=path_to_txt_conflicts_tmp)
-    #     f.file.save(path_to_txt_conflicts_tmp, File(fw))
-
-    # fw = open(path_to_txt_conflicts_tmp, 'rb')
-    # f = SaveConflictsTXT(status_file='tesT', file=path_to_txt_conflicts_tmp)
-    # f.file.save(path_to_txt_conflicts_tmp, File(fw))
-    # fw.close()
-
-
+    path_txt_conflict = f'{MEDIA_ROOT}/conflicts/txt/сalculated_conflicts {dt.now().strftime("%d %b %Y %H_%M_%S")}.txt'
 
     obj = conflicts.Conflicts()
-    res, msg = obj.calculate_conflicts(input_stages=req_data.stages,
-                                       controller_type=req_data.controller_type,
-                                       make_txt_conflicts=req_data.val_txt_conflicts,
-                                       add_conflicts_and_binval_calcConflicts=req_data.val_add_conflicts_and_binval_calcConflicts,
-                                       make_config=req_data.val_make_config,
-                                       prefix_for_new_config_file='New_',
-                                       path_to_txt_conflicts=path_to_txt_conflicts,
-                                       path_to_config_file=path_to_config_file)
+    res, msg, *rest = obj.calculate_conflicts(
+        input_stages=req_data.stages,
+        controller_type=req_data.controller_type,
+        make_txt_conflicts=req_data.val_txt_conflicts,
+        add_conflicts_and_binval_calcConflicts=req_data.val_add_conflicts_and_binval_calcConflicts,
+        make_config=req_data.val_make_config,
+        prefix_for_new_config_file='new_',
+        path_to_txt_conflicts=path_txt_conflict,
+        path_to_config_file=path_to_config_file)
 
     print(f'res: {res}: msg {msg}')
     print(f'obj.result_make_config.: {obj.result_make_config}')
-    #
-
     print(f'obj.result_num_kolichestvo_napr: {obj.result_num_kolichestvo_napr}')
     print(f'sorted_stages: {obj.sorted_stages}')
     print(f'kolichestvo_napr: {obj.kolichestvo_napr}')
@@ -447,12 +401,21 @@ def data_for_calc_conflicts(request):
 
 
     if obj.result_make_config and obj.result_make_config[0] and len(obj.result_make_config) >= 3:
-        f = UploadFiles2(status_file='dest', group=2, file=obj.result_make_config[2])
+        f = SaveConfigFiles(source='created', file=obj.result_make_config[2],
+                            controller_type=req_data.group_name)
         f.file.name = ProcessedRequestConflicts.correct_path(f.file.path)
-        print(f'f.file.path: {f.file.path}')
-        print(f'f.file.name: {f.file.name}')
         f.save()
+        create_link_config = True
+    else:
+        create_link_config = False
 
+    if obj.result_make_txt and obj.result_make_txt[0] and len(obj.result_make_txt) >= 3:
+        f = SaveConflictsTXT(source='created', file=obj.result_make_txt[2])
+        f.file.name = ProcessedRequestConflicts.correct_path(f.file.path)
+        f.save()
+        create_link_txt_conflicts = True
+    else:
+        create_link_txt_conflicts = False
 
     data = {
         'menu_header': menu_header,
@@ -466,8 +429,10 @@ def data_for_calc_conflicts(request):
         'matrix_swarco_F997': obj.matrix_swarco_F997,
         'conflict_groups_F992': obj.conflict_groups_F992,
         'binary_val_swarco_F009': obj.binary_val_swarco_F009,
-        'txt_conflict_file': SaveConflictsTXT.objects.last(),
-        'config_file': UploadFiles2.objects.last(),
+        'create_link_txt_conflicts': create_link_txt_conflicts,
+        'create_link_config': create_link_config,
+        'txt_conflict_file': SaveConflictsTXT.objects.last() if SaveConflictsTXT.objects.last() else False,
+        'config_file': SaveConfigFiles.objects.last() if SaveConfigFiles.objects.last() else False,
     }
 
     return render(request, 'toolkit/calc_conflicts.html', context=data)
