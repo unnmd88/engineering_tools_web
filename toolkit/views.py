@@ -453,25 +453,6 @@ def data_for_calc_conflicts(request):
         print(f'f.file.name: {f.file.name}')
         f.save()
 
-        # ft = UploadFiles2.objects.all()
-        # for file in ft:
-        #     print(f'ft.file.name: {file.file.name:}')
-        #     print(f'ft.file.path: {file.file.path:}')
-        #
-        #
-        #
-        #
-        # initial_path = f.file.path
-        # f.file.name = ProcessedRequestConflicts.correct_path(f.file.path)
-        # new_path = f.file.name
-        # os.rename(initial_path, new_path)
-        # f.save()
-        # print(f'path new confiG: {f.file.path}')
-
-        # f.file.path = Path(ProcessedRequestConflicts.correct_path(f.file.path))
-        # f.file.save(f.file.path, File(f.file))
-
-
 
     data = {
         'menu_header': menu_header,
@@ -485,6 +466,8 @@ def data_for_calc_conflicts(request):
         'matrix_swarco_F997': obj.matrix_swarco_F997,
         'conflict_groups_F992': obj.conflict_groups_F992,
         'binary_val_swarco_F009': obj.binary_val_swarco_F009,
+        'txt_conflict_file': SaveConflictsTXT.objects.last(),
+        'config_file': UploadFiles2.objects.last(),
     }
 
     return render(request, 'toolkit/calc_conflicts.html', context=data)

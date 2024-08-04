@@ -3,18 +3,17 @@
 // Ловим событие изменения состояния radio типов дк
 $('input[type=radio][name=controller_type]').change(function() {
   if ($('#undefind').is(':checked')) {
-          $('#make_config').prop('checked', false);
-          $('#binval_swarco').prop('checked', false);
-          $('#binval_swarco').attr('disabled', true);
-          $('#make_config').attr('disabled', true);
-          $('#config_file').attr('disabled', true);   
+      $('#make_config').prop('checked', false);
+      $('#binval_swarco').prop('checked', false);
+      $('#binval_swarco').attr('disabled', true);
+      $('#make_config').attr('disabled', true);
+      $('#config_file').attr('disabled', true);   
   }
   else if ($('#swarco').is(':checked')) {
       $('#binval_swarco').attr('disabled', false);
       $('#make_config').attr('disabled', false);      
   }
   else {
-      console.log('else');
       $('#binval_swarco').attr('disabled', true);
       $('#make_config').attr('disabled', false);
       $('#binval_swarco').prop('checked', false);
@@ -51,30 +50,45 @@ $("form").submit(function () {
     lines: $('#stages_from_area').val().split('\n'),
     num_lines: $('#stages_from_area').val().split('\n').length,
   };
-
   console.log(text_area);
   console.log(text_area.text);
   console.log(text_area.lines);
   console.log(text_area.num_lines);
-
   if (text_area.num_lines < 2) {
     alert('Количество фаз не может быть менее 2');
     return false;
   }
 
+  // Проверка на количество фаз
+  if (($('#swarco').is(':checked') && text_area.num_lines > 8)) {
+    alert(`Количество фаз для Swarco не должно превышать 8. Вы ввели: ${text_area.num_lines}`);
+    return false;
+  }
+  else if (($('#peek').is(':checked') && text_area.num_lines > 32)) {
+    alert(`Количество фаз для Peek не должно превышать 32. Вы ввели: ${text_area.num_lines}`);
+    return false;
+  }
+
+  else if (text_area.num_lines > 128) {
+    alert(`Количество фаз для неопределённого типа ДК не должно превышать 128. Вы ввели: ${text_area.num_lines}`);
+    return false;
+  }
+
+  // Проверка валидности данных при условии что выбран чекбокс "Создать файл конфигурации"
   if ($('#make_config').is(':checked')) {
-    let file_name = $('#config_file')[0].files[0].name;
-    console.log(file_name);
-    if (!$('#config_file').val()){
+    // Проверка на наличие файла
+    if ($('#config_file')[0].files.length < 1) {
       alert('Вы не выбрали файл конфигурации');
       return false;
     }
-    else if ($('#swarco').is(':checked') && file_name.slice(-5).toUpperCase() != '.PTC2'){
-      alert('Вы выбрали неверный формат файла конфигурации для Swarco');
+    // Проверка на корректное расширение файла для каждого типа ДК
+    let file_name = $('#config_file')[0].files[0].name;
+    if ($('#swarco').is(':checked') && file_name.slice(-5).toUpperCase() != '.PTC2'){
+      alert('Вы выбрали неверный формат файла конфигурации для Swarco. Выберите файл с раширением .PTC2');
       return false;
     }
     else if ($('#peek').is(':checked') && file_name.slice(-4).toUpperCase() != '.DAT'){
-      alert('Вы выбрали неверный формат файла конфигурации для Peek');
+      alert('Вы выбрали неверный формат файла конфигурации для Peek. Выберите файл с раширением .DAT');
       return false;
     }
   }
