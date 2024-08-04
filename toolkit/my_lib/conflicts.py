@@ -2,122 +2,6 @@ import os
 from datetime import datetime as dt
 
 
-def calculate_conflicts(stages=None, name_for_txt_conflicts=None, path_to_config_file=None,
-                        controller_type=None, add_conflicts_and_binval_calcConflicts=False,
-                        make_config=False):
-    """ Функция формирует матрицу конфликтов на алгоритме поиска конфликтных направлений
-        Матрица для функции F997 swarco: 0 индекс -> 1 направление, 1 индекс -> 2 направление и т.д.
-        Матрица для вывода на экран(oputput)/записи в файл: 0 индекс -> шапка матрицы
-        1 индекс -> 1 направление, 2 индекс -> 2 направление и т.д.
-        Вазвращает кортеж списков: (матрица сварко(list), матрица output(list), бинарное значение для F009(list)
-        matrix_swarco_F997 - > матрица конфликтов для F997
-        matrix_output -> матрица конфликтов для записи в txt/вывода на экран
-        binary_val_swarco_for_write_PTC2 -> бинарные значения фаз для записи в PTC2
-        binary_val_swarco_F009 -> бинарные значения фаз для записи txt
-        supervisor_matrix_swarco_F997 -> матрица конфликтов для F997, ссозданная на основе алгоритма, отличающегося
-        от того, по которому формируется matrix_swarco_F997. После создания обеих матриц идёт проверка, равны
-        ли они друг другу. Если не равны -> выходим из функции и пишем в лог
-
-    """
-    # print(f'ya v make_conflicts_and_binary_val')
-    # print(stages)
-    stages_and_napr = sort_stages(stages)
-    # print(stages_and_napr)
-    sorted_stages, kolichestvo_napr = stages_and_napr
-
-    if sorted_stages is None or kolichestvo_napr is None:
-        return
-    if name_for_txt_conflicts is None:
-        name_for_txt_conflicts = 'Calculate conflicts.txt'
-
-    if controller_type is not None and make_config:
-        if controller_type == 'swarco' and kolichestvo_napr > 48:
-            return 'swarco more than 48 directions have been introduced'
-        elif controller_type == 'swarco' and len(sorted_stages) > 8:
-            return 'swarco more than 8 stages have been introduced'
-        elif controller_type == 'peek' and kolichestvo_napr > 64:
-            return 'peek more than 64 directions have been introduced'
-        elif controller_type == 'peek' and len(sorted_stages) > 32:
-            return 'peek more than 32 stages have been introduced'
-
-    matrix_output, matrix_swarco_F997, binary_val_swarco_for_write_PTC2, \
-        binary_val_swarco_F009 = make_conflicts_and_binary_val(sorted_stages, kolichestvo_napr)
-
-    conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997, controller_type)
-
-    if add_conflicts_and_binval_calcConflicts or make_config and controller_type == 'swarco':
-
-        write_conflicts_to_txt_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
-                                    kolichestvo_napravleniy=kolichestvo_napr,
-                                    sorted_stages=sorted_stages, matrix_output=matrix_output,
-                                    conflicts_and_binVal_swarco=True,
-                                    matrix_swarco_F997=matrix_swarco_F997,
-                                    binary_val_swarco_F009=binary_val_swarco_F009,
-                                    conflict_groups_F992=conflict_groups_F992)
-    else:
-        write_conflicts_to_txt_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
-                                    sorted_stages=sorted_stages,
-                                    kolichestvo_napravleniy=kolichestvo_napr,
-                                    matrix_output=matrix_output)
-
-    if make_config:
-        if controller_type == 'swarco':
-            result_write_conflicts = make_PTC2_file(matrix_swarco_F997=matrix_swarco_F997,
-                                                    binary_val_swarco_for_write_PTC2=binary_val_swarco_for_write_PTC2,
-                                                    path_to_original_PTC2=path_to_config_file)
-            return
-        elif controller_type == 'peek':
-
-            conflict_groups_F992, sum_conflicts = make_number_coflicts_group_for_swarco_F992(
-                matrix_swarco_F997, controller_type)
-            result_write_conflicts = make_dat_file_for_peek(
-                conflict_groups_F992, sum_conflicts, sorted_stages, path_to_config_file)
-
-    return sorted_stages, kolichestvo_napr, matrix_output, matrix_swarco_F997, conflict_groups_F992, \
-        binary_val_swarco_for_write_PTC2, binary_val_swarco_F009
-
-    # if flag_save_conflicts_to_PTC2:
-    #     conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997)
-    #     write_conflicts_to_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
-    #                             sorted_stages=sorted_stages, matrix_swarco_F997=matrix_swarco_F997,
-    #                             binary_val_swarco_F009=binary_val_swarco_F009,
-    #                             binary_val_swarco_for_write_PTC2=binary_val_swarco_for_write_PTC2,
-    #                             kolichestvo_napravleniy=kolichestvo_napr,
-    #                             matrix_output=matrix_output, conflict_groups_F992=conflict_groups_F992,
-    #                             flag_save_conflicts_to_PTC2=True, path_to_original_PTC2=path_to_original_PTC2,
-    #                             path_to_new_PTC2=path_to_config_file)
-    # elif flag_save_conflicts_to_dat_peek:
-    #     conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997)
-    #     write_conflicts_to_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
-    #                             sorted_stages=sorted_stages, matrix_swarco_F997=matrix_swarco_F997,
-    #                             binary_val_swarco_F009=binary_val_swarco_F009,
-    #                             binary_val_swarco_for_write_PTC2=binary_val_swarco_for_write_PTC2,
-    #                             kolichestvo_napravleniy=kolichestvo_napr,
-    #                             matrix_output=matrix_output, conflict_groups_F992=conflict_groups_F992,
-    #                             flag_save_conflicts_to_PTC2=False, path_to_original_PTC2=path_to_original_PTC2,
-    #                             path_to_new_PTC2=path_to_config_file)
-    #     make_dat_file_for_peek(conflict_groups_F992)
-    #
-    # elif conflicts_and_binVal_swarco_for_txt:
-    #     conflict_groups_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997)
-    #     write_conflicts_to_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
-    #                             sorted_stages=sorted_stages, matrix_swarco_F997=matrix_swarco_F997,
-    #                             binary_val_swarco_F009=binary_val_swarco_F009, kolichestvo_napravleniy=kolichestvo_napr,
-    #                             matrix_output=matrix_output, conflict_groups_F992=conflict_groups_F992,
-    #                             flag_conflicts_swarco=conflicts_and_binVal_swarco_for_txt
-    #                             )
-    # else:
-    #     write_conflicts_to_file(path_and_name_for_txt_conflicts=name_for_txt_conflicts,
-    #                             sorted_stages=sorted_stages,
-    #                             kolichestvo_napravleniy=kolichestvo_napr,
-    #                             matrix_output=matrix_output,
-    #                             )
-
-    # if flag_conflicts_swarco:
-    #     return matrix_swarco_F997, matrix_output,
-    # conflicts_F992 = make_number_coflicts_group_for_swarco_F992(matrix_swarco_F997)
-
-
 class Conflicts:
 
     available_controller_types = ['swarco', 'peek', 'undefind']
@@ -587,6 +471,8 @@ class Conflicts:
             else:
                 self.result_make_config = [False, self.msg_controller_type_is_not_selected]
 
+
+            print(f'self.result_make_config__ : {self.result_make_config}')
             if make_txt_conflicts and self.result_make_txt[0] and self.result_make_config[0]:
                 return True, self.msg_success_make_config_and_txt_file
             elif not make_txt_conflicts and self.result_make_config[0]:
