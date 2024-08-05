@@ -50,14 +50,29 @@ $("form").submit(function () {
     lines: $('#stages_from_area').val().split('\n'),
     num_lines: $('#stages_from_area').val().split('\n').length,
   };
+
+  let linesS = $('#stages_from_area').val().split('\n')
   console.log(text_area);
   console.log(text_area.text);
   console.log(text_area.lines);
   console.log(text_area.num_lines);
+  
+
   if (text_area.num_lines < 2) {
     alert('Количество фаз не может быть менее 2');
     return false;
   }
+
+  // Проверка на корректность символов
+  let res = check_text_area(text_area.lines);
+  // alert('res ->> ' + res)
+
+  if (!res){
+    return false;
+  }
+  return false;
+
+  
 
   // Проверка на количество фаз
   if (($('#swarco').is(':checked') && text_area.num_lines > 8)) {
@@ -98,3 +113,77 @@ $("form").submit(function () {
 
 
 
+function check_text_area (stages) {
+  console.log('stages массив ? ' + Array.isArray(stages));
+
+  for (let i = 0; i < stages.length; i++) {
+    console.log('i >> >> ' + i);
+    console.log('stages[i] >> >> ' + stages[i]);
+    if (!check_string(stages[i], i + 1)) {
+      return false;
+    }
+  }
+  return true;
+
+}
+
+function check_string (stage_string, num_string, sep1=':', sep2=',') {
+  if (stage_string.includes(sep1)) {
+    stage_string = stage_string.split(sep1)[1];
+  }
+
+  console.log('stage_string массив ? ' + Array.isArray(stage_string));
+  console.log('stage_string  ? ' + stage_string);
+
+
+  let splited_string = stage_string.replace(' ', '').split(sep2);
+  console.log(`splited_string массив ?: ${Array.isArray(splited_string)}`);
+  console.log(`splited_string ?: ${splited_string}`);
+  console.log(`splited_string length  ?: ${splited_string.length}`);
+
+  for(let ii = 0; ii < splited_string.length; ii++) {  
+    console.log(`splited_string[ii] ?: ${splited_string[ii]}`);
+    let isNumber = /^\d+$/.test(splited_string[ii]);
+    console.log(`isNumber ?: ${isNumber}`);
+    if (!isNumber) {
+      alert(`Вы ввели не число в строке ${num_string}`);
+      return false; 
+    }
+
+    else if (isNumber && (+splited_string[ii] > 128)) {
+      alert(`Количество направлений не должно превышать 128. Вы ввели: ${splited_string[ii]} в строке ${num_string}`);
+      return false;
+    }
+  }
+  return true;
+}
+
+  // //Новая проверка
+  // let result_check_text_area = true;
+  // let tmp_string = text_area.lines;
+  // const sep = ':'
+  // console.log(tmp_string);
+
+  // tmp_string.forEach(function (item) {
+  // if (!result_check_text_area){
+  //   return;
+  // }
+  // let tmp_entry;  
+  // let tmp_entry_splited;
+  // if (item.includes(sep)) {
+  //     tmp_entry = item.split(sep)[1];
+  // }
+  // else {
+  //     tmp_entry = item;
+  // }
+
+  // tmp_entry_splited = tmp_entry.split(',')
+  // tmp_entry_splited.forEach(function (num_napravleniya) {
+  //   let isNumber = /^\d+$/.test(num_napravleniya);
+  //   console.log(`isNumber -> ${isNumber}`)
+  //   if (!isNumber) {
+  //     result_check_text_area = false;
+  //     return;
+  //   }
+
+  // });
