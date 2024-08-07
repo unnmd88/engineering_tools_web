@@ -15,7 +15,7 @@ from django.template.loader import render_to_string
 from engineering_tools.settings import MEDIA_ROOT, MEDIA_URL, BASE_DIR
 from toolkit.forms_app import CreateConflictForm
 from toolkit.models import TrafficLightObjects, SaveConfigFiles, SaveConflictsTXT
-from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts
+from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts, toolkit_lib
 
 
 
@@ -164,53 +164,59 @@ path_uploads = 'toolkit/uploads/'
 
 def get_snmp_ajax(request, num_host):
     print(f'request.GET: {request.GET}')
+    print(f'request: {request}')
+    get_dict = request.GET.dict()
+    print(f'get_dict: {get_dict}')
+
+    # for item in get_dict:
+    #     print(f'tem: {item}')
+    #     n_host, data = item.split(':', 1)
+    #     ip_adress, protocol, scn, *rest = data.split(';')
+    #     print(f'n_host: {n_host}')
+    #     print(f'data: {data}')
+    #     print(f'ip_adress: {ip_adress}')
+    #     print(f'protocol: {protocol}')
+    #     print(f'scn: {scn}')
 
     if request.GET:
-        ip_adress = request.GET.get("ip_adress")
-        protocol = request.GET.get("protocol")
-        scn = request.GET.get("scn")
+        json_data = {}
+        for num_host, data in get_dict.items():
+            print(f'num_host: {num_host}')
+            data = data.split(';')
+            if len(data) != 3:
+                continue
+            ip_adress, protocol, scn = data
+            print(f'ip_adress: {ip_adress}')
+            print(f'protocol: {protocol}')
+            print(f'scn: {scn}')
 
-        print(f'request.GET ip_adress: {ip_adress}')
-        print(f'request.GET protocol: {protocol}')
-        print(f'request.GET scn {scn}')
+            host = make_obj_snmp(protocol, ip_adress, scn)
+            host_data = toolkit_lib.make_json_to_front(host, protocol)
+            # host_data = host.make_json_to_front(host, protocol)
+            json_data[num_host] = host_data
+            print(f'json_data: {json_data}')
+
 
     else:
         print('nnnnnooo')
         return HttpResponse(json.dumps('Error: Failed to get data'), content_type='text/html')
 
-    if len(ip_adress) < 10 or protocol not in protocols:
-        return HttpResponse(json.dumps('Error: Failed to get data'), content_type='text/html')
+    # if len(ip_adress) < 10 or protocol not in protocols:
+    #     return HttpResponse(json.dumps('Error: Failed to get data'), content_type='text/html')
+
+    # json_data = {
+    #     '1': 'Фаза=1; План=1; Режим=Тест1',
+    #     '2': 'Фаза=2; План=2; Режим=Тест2',
+    #     '3': 'Фаза=3; План=3; Режим=Тест3',
+    #
+    # }
+    return HttpResponse(json.dumps(json_data, ensure_ascii=False), content_type='text/html')
 
 
 
-    host = make_obj_snmp(protocol, ip_adress, scn)
 
-    json_data = host.make_json_to_front(host)
 
     print(f'json_data: {json_data}')
-    # if protocol == protocols[0]:
-    #     json_data = {
-    #         'Фаза': host.get_stage(),
-    #         'План': host.get_plan(),
-    #     }
-    #
-    # elif protocol == protocols[1]:
-    #
-    #     json_data = {
-    #         'Фаза': host.get_stage(),
-    #         'План': host.get_plan(),
-    #         'Режим': host.statusMode.get(host.get_mode())
-    #     }
-    #
-    # elif protocol == protocols[2]:
-    #     json_data = {
-    #         'Фаза': host.get_stage(),
-    #         'План': host.get_plan(),
-    #     }
-    # else:
-    #     json_data = {
-    #         'Error': 'Сбой получения данных'
-    #     }
 
     return HttpResponse(json.dumps(json_data, ensure_ascii=False), content_type='text/html')
 
@@ -352,9 +358,6 @@ def page_not_found(request, exception):
 
 def data_for_calc_conflicts(request):
     title = 'Расчёт конфликтов'
-    print(f'MEDIA_ROOT: {MEDIA_ROOT}')
-    print(f'MEDIA_URL: {MEDIA_URL}')
-    print(f'BASE_DIR: {BASE_DIR}')
 
     if request.GET:
         data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title}
@@ -374,6 +377,9 @@ def data_for_calc_conflicts(request):
         data = {'render_conflicts_data': False, 'menu_header': menu_header, 'title': title}
         return render(request, 'toolkit/calc_conflicts.html', context=data)
 
+    print(f'BASE_DIR {BASE_DIR}')
+    print(f'MEDIA_ROOT {MEDIA_ROOT}')
+    print(f'MEDIA_URL {MEDIA_URL}')
 
     path_txt_conflict = f'{MEDIA_ROOT}/conflicts/txt/сalculated_conflicts {dt.now().strftime("%d %b %Y %H_%M_%S")}.txt'
 
@@ -469,7 +475,7 @@ def make_obj_snmp(protocol, ip_adress, scn=None):
     elif protocol == 'Поток_UG405':
         obj = snmpmanagement_v2.Potok(ip_adress, scn)
     elif protocol == 'Peek_UG405':
-        obj = None
+        obj = snmpmanagement_v2.Peek(ip_adress, scn)
     else:
         obj = None
 

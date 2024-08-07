@@ -1,75 +1,47 @@
 'use strict';
 
-const intervalID = [false, false, false, false, false, false, false, false, false, false];
-const chkbx = [getdatahost_1, getdatahost_2, getdatahost_3, getdatahost_4, getdatahost_5,
-    getdatahost_6, getdatahost_7, getdatahost_8, getdatahost_9
-];
+
 
 // --------------GET REQUEST SNMP------------------
 // Отслеживаем нажатие чекбокса, который отвечает за постоянный запрос данных с дк по snmp у хоста 1
 
 // Создаем функции на изменения чекбокс внутри каждого хоста
-for (let i=1; i < 11; i++) {
-    console.log(`Это i: ${i}`)
-    $(`#getdatahost_${i}`).change(function() {
-        console.log(intervalID)
+// for (let i=1; i < 11; i++) {
+//     console.log(`Это i: ${i}`)
+//     $(`#getdatahost_${i}`).change(function() {
+//         console.log(intervalID)
     
-        console.log(`num_host = ${i}`)
+//         console.log(`num_host = ${i}`)
     
-        if (chkbx[i-1].checked && !intervalID[i]){
-            let id_getData = setInterval(getData, 4000, i);
-            intervalID[i] = id_getData;
+//         if (chkbx[i-1].checked && !intervalID[i]){
+//             let id_getData = setInterval(getData, 4000, i);
+//             intervalID[i] = id_getData;
     
-        console.log('if');
+//         console.log('if');
     
-        }
-        else{
-            clearInterval(intervalID[i])
-            intervalID[i] = false;
-        console.log('else');
-        document.getElementById(`datahost_${i}`).textContent="--";
+//         }
+//         else{
+//             clearInterval(intervalID[i])
+//             intervalID[i] = false;
+//         console.log('else');
+//         document.getElementById(`datahost_${i}`).textContent="--";
     
-        }
-        console.log(intervalID)
+//         }
+//         console.log(intervalID)
     
-        }
+//         }
     
-    )
-}
+//     )
+// }
 
 // Функция запроса и получения текущего режима/плана/фазы по snmp
-let getData = function (num_host){
 
-    console.log(num_host);
-    $.ajax({
 
-    type: "GET",
-    url: `get-data-snmp/${num_host}/`,
-    data:{
-        'ip_adress': $('#ip_' + num_host).val(),
-        'protocol': $(`#protocol_${num_host} option:selected`).text(),
-        'scn': $(`#scn_${num_host}`).val(),
-        },
-    dataType: 'text',
-    cache: false,
-    success: function (data) {
-    console.log(data)
-    let postStringify = JSON.parse(data);
-    console.log(postStringify);
-    $(`#datahost_${num_host}`).text(`Фаза: ${postStringify.Фаза}, План: ${postStringify.План}, \n
-                                    Режим: ${postStringify.Режим}  `);
-                                    
-    // $(`#datahost_${num_host}`).text(data);
-    // document.getElementById(`datahost_${num_host}`).textContent=data;
-    if (data == 'yes'){
-    console.log(data);
-    }
-    else if (data == 'no'){
-    }
-        }
-    }
-);
-}
+
+
+
+
+
 
 // --------------SET REQUEST SNMP------------------
 //Функция отправки запроса команды при нажатии кнопки
@@ -129,6 +101,58 @@ const show_hide_hosts_snmp = function () {
 }
 
 $(`#table_1`).show();
+
+let interval = 4000;
+const intervalID = setInterval(sendReqGetData, interval);
+
+
+
+function collect_data_from_hosts (){
+    let num_visible_hosts = $(`#visible_hosts`).val();
+    let data = {};
+    for(let num_host = 1; num_host <= num_visible_hosts; num_host++) {   
+        if ($(`#getdatahost_${num_host}`).is(':checked')){
+            data[num_host] = `${$('#ip_' + num_host).val()};${$(`#protocol_${num_host} option:selected`).text()};${$(`#scn_${num_host}`).val()}`;
+        }
+         }
+         console.log(data);
+    return data;
+    }
+
+
+
+function sendReqGetData () {
+
+    console.log('sendReqGetData');
+    $.ajax({
+
+    type: "GET",
+    url: `get-data-snmp/1/`,
+    data: collect_data_from_hosts(),
+
+    dataType: 'text',
+    cache: false,
+    success: function (data) {
+    console.log(data)
+    let postStringify = JSON.parse(data);
+    console.log(postStringify);
+
+    $.each(postStringify, function(num_host, write_data) {
+        $(`#datahost_${num_host}`).text(write_data);
+    });
+                                    
+    // $(`#datahost_${num_host}`).text(data);
+    // document.getElementById(`datahost_${num_host}`).textContent=data;
+    if (data == 'yes'){
+    console.log(data);
+    }
+    else if (data == 'no'){
+    }
+        }
+    }
+);
+}
+
 
 
 

@@ -1,46 +1,54 @@
 
+def make_json_to_front(host, protocol=None):
 
-class ProcessingDataConflicts:
-    upload_name_id = 'upload_config_file'
-    name_textarea = 'table_stages'
-    def __init__(self, request):
-        self.request = request
-        self.py_dict = request.POST.dict()
-        self.files_dict = request.FILES.dict()
-        self.file = request.FILES.get(self.upload_name_id)
-        self.filename = self.file.name
+    status_mode = {
+        '8': 'Адаптивный',
+        '10': 'Ручное управление',
+        '11': 'Удалённое управление',
+        '12': 'Фиксированный',
+        '00': 'Ошибка электрической цепи',
+        '--': 'Нет данных',
+    }
 
+    vals = (None, 'None')
 
+    mode = status_mode.get(host.get_mode())
+    print(f'mode from base: {mode}')
+    curr_stage = host.get_stage()
+    curr_plan = host.get_plan()
 
-    @staticmethod
-    def make_id(filename: str) -> int:
-        """"
-        Метод определяет какой номер 'id'(группа) присвоить для записи в модель UploadFiles2
-        id_for_db = 1 -> конфиг swarco
-        id_for_db = 2 -> конфиг peek
-        id_for_db = 3 -> txt файл
-        id_for_db = 3 -> отсальные расширения
-        :arg filename -> название файла
-        :return id_for_db -> номер id
-        """
-        file_ext = filename[-4:].lower()
-        if file_ext == 'ptc2':
-            id_for_db = 1
-        elif file_ext == '.dat':
-            id_for_db = 2
-        elif file_ext == '.txt':
-            id_for_db = 3
-        else:
-            id_for_db = 4
-        return id_for_db
+    """ New ver """
+    if curr_stage in vals and curr_plan in vals:
+        json_data = 'Фаза= План= Режим=Аварийный'
+        return json_data
+    if curr_stage in vals or curr_plan in vals:
+        json_data = f'Фаза={curr_stage} План={curr_plan} Режим=Нет данных'
+    else:
+        print(f'host.ip_adress: {host.ip_adress}' )
+        json_data = f'Фаза={curr_stage} План={curr_plan} Режим={mode}'
+    return json_data
 
+    """ Old ver """
+    if curr_stage in vals and curr_plan in vals:
+        json_data = {
+            'Фаза': '--',
+            'План': '--',
+            'Режим': 'Аварийный',
+        }
+        return json_data
+    if curr_stage in vals or curr_plan in vals:
+        json_data = {
+            'Фаза': curr_stage,
+            'План': curr_plan,
+            'Режим': 'Нет данных',
+        }
+    else:
+        print(f'host.ip_adress: {host.ip_adress}' )
+        json_data = {
+            'Фаза': curr_stage,
+            'План': curr_plan,
+            'Режим': mode,
+        }
+    return json_data
 
-        file = request.FILES.get(upload_name_id)
-        filename = file.name
-        print(f'request.FILES: {filename}')
-        print(f'request.FILES: {type(filename)}')
-        id_for_db = Common.make_group_name(filename)
-        # fp = UploadFiles2(file=file, group=id_for_db, status_file='source')
-        # fp.save()
-        obj = UploadFiles2(file=file, group=id_for_db, status_file='source')
 

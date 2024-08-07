@@ -141,6 +141,7 @@ class Conflicts:
             self.result_input_data_stages = (False, self.msg_more_than_100_stages_input_stages)
 
         self.result_input_data_stages = (True, self.msg_data_input_stages_success)
+        print(f'self.tmp_input_stages  from validate_input_data_stages: {self.tmp_input_stages}')
         return input_data_stages
 
     def validate_max_stages(self, stages, controller_type=None):
@@ -235,9 +236,11 @@ class Conflicts:
             Значения в списке - направления, участвующие в фазе
         """
 
+
         self.sorted_stages = []
         self.kolichestvo_napr = 0
 
+        print(f'stages из метода, начало алгоритма сортировки: {stages}')
         for line in stages:
             if ':' in line:
                 processed_line = line.replace("\r", '').split(':')[1]
@@ -245,15 +248,18 @@ class Conflicts:
                 processed_line = line.replace("\r", '')
             processed_line = processed_line.replace(" ", '')
 
+            print(f'processed_line до auto_correct_last_char: {processed_line}')
             if auto_correct_last_char:
                 processed_line = self.remove_chars(processed_line)
+            print(f'processed_line после auto_correct_last_char: {processed_line}')
 
             if processed_line in chars_for_identification_all_red:
                 self.sorted_stages.append([])
                 continue
 
+            print(f'processed_line до split ",": {processed_line}')
             processed_line = list(set(processed_line.split(',')))
-
+            print(f'processed_line после split и sort",": {processed_line}')
             # Проверка корректности введенных данных
             for i, char in enumerate(processed_line):
                 if not char.isdigit():
@@ -263,6 +269,7 @@ class Conflicts:
 
             processed_line = sorted(processed_line)
 
+            print(f'processed_line: {processed_line}')
             self.sorted_stages.append(processed_line)
 
             if processed_line[-1] > self.kolichestvo_napr:
@@ -271,6 +278,9 @@ class Conflicts:
             if not self.validate_max_groups(self.kolichestvo_napr, controller_type=self.controller_type):
                 return self.result_num_kolichestvo_napr[0]
 
+
+        print(f'self.sorted_stages final: {self.sorted_stages}')
+        print(f'self.kolichestvo_naptavleniy: {self.kolichestvo_napr}')
         return self.sorted_stages
 
 
@@ -409,6 +419,7 @@ class Conflicts:
         self.input_stages = input_stages
         self.controller_type = controller_type
         self.make_config = make_config
+        print(f'make_txt_conflicts from func:: {make_txt_conflicts}')
 
         # Служебная проверка типа данных в input_stages
         if isinstance(self.input_stages, str):
@@ -448,6 +459,7 @@ class Conflicts:
             self.write_conflicts_to_txt_file(
                 path_and_name_for_txt_conflicts=path_to_txt_conflicts,
                 conflicts_and_binVal_swarco=add_conflicts_and_binval_calcConflicts,)
+            print(f'self.result_make_txt: {self.result_make_txt}')
 
         if make_config:
             if self.controller_type == self.available_controller_types[0]:
@@ -459,6 +471,8 @@ class Conflicts:
             else:
                 self.result_make_config = [False, self.msg_controller_type_is_not_selected]
 
+
+            print(f'self.result_make_config__ : {self.result_make_config}')
             if make_txt_conflicts and self.result_make_txt[0] and self.result_make_config[0]:
                 return True, self.msg_success_make_config_and_txt_file
             elif not make_txt_conflicts and self.result_make_config[0]:
@@ -532,6 +546,7 @@ class Conflicts:
                         for val in num_napravleniya:
                             file.write(val)
         except Exception as err: # определить какую ошибку ловишь
+            print(f'Exception: {err}')
             pass #что-то делать
             return err # например
 

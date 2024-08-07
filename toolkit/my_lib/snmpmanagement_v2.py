@@ -1,6 +1,10 @@
 import asyncio
 import os
 import socket
+import subprocess
+import sys
+
+import requests
 
 from pysnmp.hlapi.asyncio import *
 from toolkit.my_lib.configuration import auth, path_snmpget, path_snmpset
@@ -21,6 +25,10 @@ class AllProtocols:
     snmp_get = path_snmpget
     snmp_set = path_snmpset
 
+    msg_bad_request = 'Request failed'
+    shell_source = 'by_shell'
+    pysnmp_source = 'by_pysnpm'
+
     # statusMode = {
     #     '8': 'Адаптивный',
     #     '10': 'Ручное управление',
@@ -37,8 +45,19 @@ class AllProtocols:
         '--': 'Нет данных',
     }
 
-    def __init__(self, ip_adress):
+    def __init__(self, ip_adress, timeout=1, retries=1, source=shell_source):
+        """
+        :param ip_adress: ip контроллера
+        :param timeout: таймаут запроса get/set
+        :param retries: кол-во попыток запроса get/set
+        :param source:
+                      'shell' -> get/set из оболочки(snmpset/snmpget)
+                      'pysnmp' -> get/set из библиотеки pysnmp
+        """
         self.ip_adress = ip_adress
+        self.timeout = timeout
+        self.retries = retries
+        self.source = source
 
     """****************** Different functions ******************"""
 
@@ -67,38 +86,6 @@ class AllProtocols:
         else:
             return True
 
-    @classmethod
-    def make_json_to_front(cls, host):
-
-        vals = (None, 'None')
-        curr_stage = host.get_stage()
-        curr_plan = host.get_plan()
-
-        if curr_stage in vals and curr_plan in vals:
-            json_data = {
-                'Фаза': '--',
-                'План': '--',
-                'Режим': 'Аварийный',
-            }
-            return json_data
-        if curr_stage in vals or curr_plan in vals:
-            json_data = {
-                'Фаза': curr_stage,
-                'План': curr_plan,
-                'Режим': 'Нет данных',
-            }
-        else:
-            print(f'host.ip_adress: {host.ip_adress}' )
-            json_data = {
-                'Фаза': curr_stage,
-                'План': curr_plan,
-                'Режим': host.statusMode.get(host.get_mode())
-            }
-        return json_data
-# print('snmpmanagement is called')
-
-
-############ Классы ################
 
 class Swarco(AllProtocols):
     community = 'private'
@@ -154,6 +141,8 @@ class Swarco(AllProtocols):
                 # proc.kill()
                 print('timeout')
                 continue
+
+
 
     def get_plan(self):
         """  Возвращает номер текущего плана """
@@ -1056,7 +1045,7 @@ class Potok(AllProtocols):
             elif val_list == bad_scn:
                 return 'Bad scn'
 
-    def get_OperaionMode(self):
+    def get_OperationMode(self):
 
         oid = self.potok_rw_OperationMode
         bad_scn = ['\n']
@@ -1238,124 +1227,281 @@ class Potok(AllProtocols):
         self.set_OperationMode(value='1')
 
 
+class Peek(AllProtocols):
+
+    community = 'UTMC'
+
+    @staticmethod
+    def val_stages_for_get_stage_UG405_peek(option=None):
+        """ В зависимости от опции функция формирует словарь с номером и значением фазы
+        """
+        # print(f'option: {option}')
+        if option == 'get':
+            mask_after_8stages_get = ['01', '02', '04', '08', '10', '20', '40', '80']
+            stages = ['01', '02', '04', '08', '10', '6', '@', '80']
+
+            # одна итерация цикла 8 фаз. В stages изначально уже лежат 8 фаз
+            # поэтому range(7) -> 8 + 7 * 8 = 64. тогда range(8) -> 8 + 8 * 8, range(9) -> 8 + 9 * 8 и т.д.
+            for i in range(7):
+                temp_lst = [
+                    f'{el}{"00" * (i + 1)}' if el != '40' else f'{el}{"00" * (i + 1)}@' for el in mask_after_8stages_get
+                ]
+                stages = stages + temp_lst
+            # print(stages)
+
+            get_val_stage_UG405_Peek = {k: v for v, k in enumerate(stages, 1)}
+            return get_val_stage_UG405_Peek
+            # print(get_val_stage_UG405_POTOK)
+        elif option == 'set':
+            mask_after_8stages_set = ['01', '02', '04', '08', '10', '20', '40', '80']
+            stages = ['01', '02', '04', '08', '10', '20', '40', '80']
+            for i in range(7):
+                temp_lst = [
+                    f'{el}{"00" * (i + 1)}' for el in mask_after_8stages_set
+                ]
+                stages = stages + temp_lst
+            set_val_stage_UG405_Peek = {str(k): v for k, v in enumerate(stages, 1)}
+            # print(set_val_stage_UG405_POTOK)
+            return set_val_stage_UG405_Peek
+
+    # Ключи значения фаз для get запросов UG405 Peek
+    get_val_stage_UG405_PEEK = {'0100': 1, '0200': 2, '0400': 3, '0800': 4,
+                                '1000': 5, '2000': 6, '4000@': 7, '8000': 8,
+                                '0001': 9, '0002': 10, '0004': 11, '0008': 12,
+                                '0010': 13, '0020': 14, '0040@': 15, '0080': 16,
+
+                                '010000': 1, '020000': 2, '040000': 3, '080000': 4,
+                                '100000': 5, '200000': 6, '400000@': 7, '800000': 8,
+                                '000100': 9, '000200': 10, '000400': 11, '000800': 12,
+                                '001000': 13, '002000': 14, '004000@': 15, '008000': 16,
+
+                                '01000000': 1, '02000000': 2, '04000000': 3, '08000000': 4,
+                                '10000000': 5, '20000000': 6, '40000000@': 7, '80000000': 8,
+                                '00010000': 9, '00020000': 10, '00040000': 11, '00080000': 12,
+                                '00100000': 13, '00200000': 14, '00400000@': 15, '00800000': 16,
+
+                                '01': 1, '02': 2, '04': 3, '08': 4,
+                                '10': 5, '6': 6, '@': 7, '80': 8,
+                                }
+
+    # Ключи значения фаз для set запросов UG405 Peek
+    set_stage_UG405_peek_values = val_stages_for_get_stage_UG405_peek(option='set')
+
+    # oid для UG405 Peek
+    peek_utcType2OperationModeTimeout = '.1.3.6.1.4.1.13267.3.2.2.4.0'
+    peek_utcType2OperationMode = '.1.3.6.1.4.1.13267.3.2.4.1.0'
+    peek_utcControlLO = '.1.3.6.1.4.1.13267.3.2.4.2.1.11'
+    peek_utcControlFF = '.1.3.6.1.4.1.13267.3.2.4.2.1.20'
+    peek_utcControlTO = '.1.3.6.1.4.1.13267.3.2.4.2.1.15'
+    peek_utcControlFn = '.1.3.6.1.4.1.13267.3.2.4.2.1.5'
+    peek_utcReplyGn = '.1.3.6.1.4.1.13267.3.2.5.1.1.3'
+
+    mask_url_get_data = '/hvi?file=m001a.hvi&pos1=0&pos2=-1'
+
+    state_CONTROL = ('УПРАВЛЕНИЕ', 'CONTROL')
+    state_FLASH = 'МИГАНИЕ'
+    state_RED = 'КРУГОМ КРАСНЫЙ'
+
+    modeVA = 'VA'
+    modeFT = 'FT'
+    modeMAN = 'MAN'
+    modeUTC = 'UTC'
+    modeCLF = 'CLF'
+
+    # oid для UG405 Peek
+    # oids_UG405_PEEK = {peek_utcReplyGn: '.1.3.6.1.4.1.13267.3.2.5.1.1.3',
+    #                    peek_utcControlLO: '.1.3.6.1.4.1.13267.3.2.4.2.1.11',
+    #                    peek_utcControlFF: '.1.3.6.1.4.1.13267.3.2.4.2.1.20',
+    #                    peek_utcControlTO: '.1.3.6.1.4.1.13267.3.2.4.2.1.15',
+    #                    peek_utcControlFn: '.1.3.6.1.4.1.13267.3.2.4.2.1.5',
+    #                    peek_utcType2OperationModeTimeout: '.1.3.6.1.4.1.13267.3.2.2.4.0',
+    #                    peek_utcType2OperationMode: '.1.3.6.1.4.1.13267.3.2.4.1.0'
+    #                    }
+
+    def __init__(self, ip_adress, scn):
+        super().__init__(ip_adress)
+        self.scn = self.convert_scn(scn)
+        self.stage = None
+        self.plan = None
+
+    def get_stageFn(self):
+        """  Возвращает номер текущей фазы """
+
+        oid = self.peek_utcReplyGn + self.scn
+        stage6 = [' \n']
+        bad_scn = ['\n']
+
+        for i in range(4):
+            # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
+            #                         stdout=subprocess.PIPE, text=True)
+            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+            val_list = proc.readlines()
+            val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
+            # print(val_list)
+            # print(val_string)
+            if 'Timeout' not in val_string and val_string != '0000' and val_list != stage6:
+                return self.get_val_stage_UG405_PEEK.get(val_string)
+            elif val_string == '0000':
+                return val_string
+            elif val_list == stage6:
+                return 6
+            elif i == 3:
+                return 'None'
+            elif 'Timeout' in val_string:
+                continue
+            elif val_list == bad_scn:
+                return 'Bad scn'
+
+    def get_stage(self):
+        """  Возвращает номер текущей фазы """
+        return self.stage
+
+    def get_plan(self):
+        """  Возвращает номер текущего плана """
+        return self.plan
+
+    def get_LO(self):
+
+        oid = self.peek_utcControlLO + self.scn
+        bad_scn = ['\n']
+
+        for i in range(4):
+            # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
+            #                         stdout=subprocess.PIPE, text=True)
+            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+
+            val_list = proc.readlines()
+            val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
+            if 'Timeout' not in val_string:
+                return val_string
+            elif i == 3:
+                return
+            elif 'Timeout' in val_string:
+                continue
+            elif val_list == bad_scn:
+                return 'Bad scn'
+
+    def get_FF(self):
+
+        oid = self.peek_utcControlFF + self.scn
+        bad_scn = ['\n']
+
+        for i in range(4):
+            # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
+            #                         stdout=subprocess.PIPE, text=True)
+            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+
+            val_list = proc.readlines()
+            val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
+            if 'Timeout' not in val_string:
+                return val_string
+            elif i == 3:
+                return
+            elif 'Timeout' in val_string:
+                continue
+            elif val_list == bad_scn:
+                return 'Bad scn'
+
+    def get_OperationModeTimeout(self) -> str:
+
+        oid = self.peek_utcType2OperationModeTimeout
+        bad_scn = ['\n']
+
+        for i in range(4):
+            # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
+            #                         stdout=subprocess.PIPE, text=True)
+            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+
+            val_list = proc.readlines()
+            val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
+            if 'Timeout' not in val_string:
+                return val_string
+            elif i == 3:
+                break
+            elif 'Timeout' in val_string:
+                continue
+            elif val_list == bad_scn:
+                return 'Bad oid'
+
+    def get_OperationMode(self):
+
+        oid = self.peek_utcType2OperationMode
+        bad_scn = ['\n']
+
+        for i in range(4):
+            # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
+            #                         stdout=subprocess.PIPE, text=True)
+            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+
+            val_list = proc.readlines()
+            val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
+            if 'Timeout' not in val_string:
+                return val_string
+            elif i == 3:
+                return
+            elif 'Timeout' in val_string:
+                continue
+            elif val_list == bad_scn:
+                return 'Bad oid'
+
+    def get_mode(self):
+        """
+        Возвращает текущий режим
+        '8': 'Адаптивный',
+        '10': 'Ручное управление',
+        '11': 'Удалённое управление',
+        '12': 'Фиксированный',
+        '--': 'Нет данных',
+        :return current mode
+        """
+
+        url = f'http://{self.ip_adress}{self.mask_url_get_data}'
+        session = requests.get(url)
+        data = bytes.decode(session.content, encoding='utf-8')
+
+        state = mode = None
+        for line in data.split('\n'):
+            if 'T_PLAN' in line:
+                self.plan = line.replace(':D;;##T_PLAN##;', '').replace('-', '').replace(' ', '')
+                print(f'self.plan: {self.plan}')
+            elif ':SUBTITLE' in line:
+                adress = line.replace(':SUBTITLE;Moscow:', '')
+                print(f'adress: {adress}')
+            elif 'T_STATE' in line:
+                state = line.replace(':D;;##T_STATE##;', '')
+                print(f'state: {state}')
+
+            elif 'T_MODE' in line:
+                mode, stage = line.replace(':D;;##T_MODE## (##T_STAGE##);', '').split()
+                self.stage = stage.replace('(', '').replace(')', '')
+                print(f'mode: {mode}, self.stage: {self.stage}')
+                break
+
+        print(f'if self.stage.isdigit(): {self.stage.isdigit()}')
+        print(f'int(self.stage) > 0: {int(self.stage) > 0}')
+        print(f'self.state_CONTROL: {self.state_CONTROL}')
+
+        if self.stage.isdigit() and int(self.stage) > 0 and state.strip() in self.state_CONTROL:
+            if mode == self.modeVA:
+                return '8'
+            elif mode == self.modeFT:
+                return '12'
+            elif mode == self.modeMAN:
+                return '10'
+            elif mode == self.modeUTC:
+                return '11'
+            else:
+                return '--'
+
 
 ###########################
-
-
-def val_stages_for_get_stage_UG405_potok(option=None):
-    """ В зависимости от опции функция формирует словарь с номером и значением фазы
-    """
-    # print(f'option: {option}')
-    if option == 'get':
-        mask_after_8stages_get = ['01', '02', '04', '08', '10', '20', '40', '80']
-        stages = ['01', '02', '04', '08', '10', '6', '@', '80']
-
-        # одна итерация цикла 8 фаз. В stages изначально уже лежат 8 фаз
-        # поэтому range(7) -> 8 + 7 * 8 = 64. тогда range(8) -> 8 + 8 * 8, range(9) -> 8 + 9 * 8 и т.д.
-        for i in range(7):
-            temp_lst = [
-                f'{el}{"00" * (i + 1)}' if el != '40' else f'{el}{"00" * (i + 1)}@' for el in mask_after_8stages_get
-            ]
-            stages = stages + temp_lst
-        # print(stages)
-
-        get_val_stage_UG405_POTOK = {k: v for v, k in enumerate(stages, 1)}
-        return get_val_stage_UG405_POTOK
-        # print(get_val_stage_UG405_POTOK)
-    elif option == 'set':
-        mask_after_8stages_set = ['0x01', '0x02', '0x04', '0x08', '0x10', '0x20', '0x40', '0x80']
-        stages = ['0x01', '0x02', '0x04', '0x08', '0x10', '0x20', '0x40', '0x80']
-        for i in range(7):
-            temp_lst = [
-                f'{el}{"00" * (i + 1)}' for el in mask_after_8stages_set
-            ]
-            stages = stages + temp_lst
-        set_val_stage_UG405_POTOK = {str(k): v for k, v in enumerate(stages, 1)}
-        # print(set_val_stage_UG405_POTOK)
-        return set_val_stage_UG405_POTOK
-
-
-def val_stages_for_get_stage_UG405_peek(option=None):
-    """ В зависимости от опции функция формирует словарь с номером и значением фазы
-    """
-    # print(f'option: {option}')
-    if option == 'get':
-        mask_after_8stages_get = ['01', '02', '04', '08', '10', '20', '40', '80']
-        stages = ['01', '02', '04', '08', '10', '6', '@', '80']
-
-        # одна итерация цикла 8 фаз. В stages изначально уже лежат 8 фаз
-        # поэтому range(7) -> 8 + 7 * 8 = 64. тогда range(8) -> 8 + 8 * 8, range(9) -> 8 + 9 * 8 и т.д.
-        for i in range(7):
-            temp_lst = [
-                f'{el}{"00" * (i + 1)}' if el != '40' else f'{el}{"00" * (i + 1)}@' for el in mask_after_8stages_get
-            ]
-            stages = stages + temp_lst
-        # print(stages)
-
-        get_val_stage_UG405_POTOK = {k: v for v, k in enumerate(stages, 1)}
-        return get_val_stage_UG405_POTOK
-        # print(get_val_stage_UG405_POTOK)
-    elif option == 'set':
-        mask_after_8stages_set = ['01', '02', '04', '08', '10', '20', '40', '80']
-        stages = ['01', '02', '04', '08', '10', '20', '40', '80']
-        for i in range(7):
-            temp_lst = [
-                f'{el}{"00" * (i + 1)}' for el in mask_after_8stages_set
-            ]
-            stages = stages + temp_lst
-        set_val_stage_UG405_POTOK = {str(k): v for k, v in enumerate(stages, 1)}
-        # print(set_val_stage_UG405_POTOK)
-        return set_val_stage_UG405_POTOK
 
 
 """**************************************************************************
 ***                          Configuration Peek                          ****   
 *****************************************************************************
 """
-# Ключи значения фаз для get запросов UG405 Peek
-get_val_stage_UG405_PEEK = {'0100': 1, '0200': 2, '0400': 3, '0800': 4,
-                            '1000': 5, '2000': 6, '4000@': 7, '8000': 8,
-                            '0001': 9, '0002': 10, '0004': 11, '0008': 12,
-                            '0010': 13, '0020': 14, '0040@': 15, '0080': 16,
 
-                            '010000': 1, '020000': 2, '040000': 3, '080000': 4,
-                            '100000': 5, '200000': 6, '400000@': 7, '800000': 8,
-                            '000100': 9, '000200': 10, '000400': 11, '000800': 12,
-                            '001000': 13, '002000': 14, '004000@': 15, '008000': 16,
-
-                            '01000000': 1, '02000000': 2, '04000000': 3, '08000000': 4,
-                            '10000000': 5, '20000000': 6, '40000000@': 7, '80000000': 8,
-                            '00010000': 9, '00020000': 10, '00040000': 11, '00080000': 12,
-                            '00100000': 13, '00200000': 14, '00400000@': 15, '00800000': 16,
-
-                            '01': 1, '02': 2, '04': 3, '08': 4,
-                            '10': 5, '6': 6, '@': 7, '80': 8,
-                            }
-# Ключи значения фаз для set запросов UG405 Peek
-
-set_stage_UG405_peek_values = val_stages_for_get_stage_UG405_peek(option='set')
-# print(set_stage_UG405_peek_values)
-# set_stage_UG405_peek_values = {'1': '01', '2': '02', '3': '04', '4': '08',
-#                                '5': '10', '6': '20', '7': '40', '8': '80',
-#                                '9': '0001', '10': '0002', '11': '0004', '12': '0008',
-#                                '13': '0010', '14': '0020', '15': '0040', '16': '0080'}
-# Ключи oid UG405 Peek
-peek_utcType2OperationModeTimeout = 'utcType2OperationModeTimeout'
-peek_utcType2OperationMode = 'utcType2OperationMode'
-peek_utcControlLO = 'utcControlLO'
-peek_utcControlFF = 'utcControlFF'
-peek_utcControlTO = 'utcControlTO'
-peek_utcControlFn = 'utcControlFn'
-peek_utcReplyGn = 'utcReplyGn'
-# oid для UG405 Peek
-oids_UG405_PEEK = {peek_utcReplyGn: '.1.3.6.1.4.1.13267.3.2.5.1.1.3',
-                   peek_utcControlLO: '.1.3.6.1.4.1.13267.3.2.4.2.1.11',
-                   peek_utcControlFF: '.1.3.6.1.4.1.13267.3.2.4.2.1.20',
-                   peek_utcControlTO: '.1.3.6.1.4.1.13267.3.2.4.2.1.15',
-                   peek_utcControlFn: '.1.3.6.1.4.1.13267.3.2.4.2.1.5',
-                   peek_utcType2OperationModeTimeout: '.1.3.6.1.4.1.13267.3.2.2.4.0',
-                   peek_utcType2OperationMode: '.1.3.6.1.4.1.13267.3.2.4.1.0'
-                   }
 
 """*********************************************************************************
 ***                          Configuration Potok UG405                          ****   
@@ -1381,127 +1527,6 @@ oids_UG405_PEEK = {peek_utcReplyGn: '.1.3.6.1.4.1.13267.3.2.5.1.1.3',
 """
 
 """************************* Peek *************************"""
-
-
-def get_stage_ug405_peek(ip_adress: str, scn_no_convert: str):
-    """  Возвращает номер текущей фазы """
-
-    scn = convert_scn(scn_no_convert)
-    community = community_peek
-    oid = f'{oids_UG405_PEEK.get(peek_utcReplyGn)}{scn}'
-    stage6 = [' \n']
-    bad_scn = ['\n']
-
-    for i in range(4):
-        # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
-        #                         stdout=subprocess.PIPE, text=True)
-        proc = os.popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}')
-        val_list = proc.readlines()
-        val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
-        # print(val_list)
-        # print(val_string)
-        if 'Timeout' not in val_string and val_string != '0000' and val_list != stage6:
-            return get_val_stage_UG405_PEEK.get(val_string)
-        elif val_string == '0000':
-            return val_string
-        elif val_list == stage6:
-            return 6
-        elif i == 3:
-            return 'None'
-        elif 'Timeout' in val_string:
-            continue
-        elif val_list == bad_scn:
-            return 'Bad scn'
-
-
-def get_LO_ug405_peek(ip_adress, scn_no_convert):
-    scn = convert_scn(scn_no_convert)
-    community = community_peek
-    oid = f'{oids_UG405_PEEK.get(peek_utcControlLO)}{scn}'
-    bad_scn = ['\n']
-
-    for i in range(4):
-        # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
-        #                         stdout=subprocess.PIPE, text=True)
-        proc = os.popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}')
-
-        val_list = proc.readlines()
-        val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
-        if 'Timeout' not in val_string:
-            return val_string
-        elif i == 3:
-            return
-        elif 'Timeout' in val_string:
-            continue
-        elif val_list == bad_scn:
-            return 'Bad scn'
-
-
-def get_FF_ug405_peek(ip_adress, scn_no_convert):
-    scn = convert_scn(scn_no_convert)
-    community = community_peek
-    oid = f'{oids_UG405_PEEK.get(peek_utcControlFF)}{scn}'
-    bad_scn = ['\n']
-
-    for i in range(4):
-        # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
-        #                         stdout=subprocess.PIPE, text=True)
-        proc = os.popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}')
-
-        val_list = proc.readlines()
-        val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
-        if 'Timeout' not in val_string:
-            return val_string
-        elif i == 3:
-            return
-        elif 'Timeout' in val_string:
-            continue
-        elif val_list == bad_scn:
-            return 'Bad scn'
-
-
-def get_OperationModeTimeout_ug405_peek(ip_adress: str) -> str:
-    community = community_peek
-    oid = f'{oids_UG405_PEEK.get(peek_utcType2OperationModeTimeout)}'
-    bad_scn = ['\n']
-
-    for i in range(4):
-        # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
-        #                         stdout=subprocess.PIPE, text=True)
-        proc = os.popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}')
-
-        val_list = proc.readlines()
-        val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
-        if 'Timeout' not in val_string:
-            return val_string
-        elif i == 3:
-            break
-        elif 'Timeout' in val_string:
-            continue
-        elif val_list == bad_scn:
-            return 'Bad oid'
-
-
-def get_OperationMode_ug405_peek(ip_adress):
-    community = community_peek
-    oid = f'{oids_UG405_PEEK.get(peek_utcType2OperationMode)}'
-    bad_scn = ['\n']
-
-    for i in range(4):
-        # proc = subprocess.Popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}',
-        #                         stdout=subprocess.PIPE, text=True)
-        proc = os.popen(f'{snmp_get} -q -r:{ip_adress} -v:2c -t:1 -c:{community} -o:{oid}')
-
-        val_list = proc.readlines()
-        val_string = " ".join(val_list).rstrip().replace('.', '').replace(' ', '')
-        if 'Timeout' not in val_string:
-            return val_string
-        elif i == 3:
-            return
-        elif 'Timeout' in val_string:
-            continue
-        elif val_list == bad_scn:
-            return 'Bad oid'
 
 
 ############################################################
