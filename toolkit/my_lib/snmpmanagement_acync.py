@@ -118,73 +118,100 @@ class Swarco(AllProtocols):
 
     """ GET REQUEST """
 
-    def get_stage(self):
-        """  Возвращает номер текущей фазы """
 
-        async def run():
-            errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
-                SnmpEngine(),
-                CommunityData(self.community),
-                UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
-                ContextData(),
-                ObjectType(ObjectIdentity(self.swarcoUTCTrafftechPhaseStatus), )
-            )
-            print(errorIndication, errorStatus, errorIndex, varBinds)
-            for oid, val in varBinds:
-                print(f'{oid.prettyPrint()} = {val.prettyPrint()}')
-        asyncio.run(run())
+    async def get_stage(self):
+        print(f'async get_stage для {self.ip_adress}')
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+                   SnmpEngine(),
+                   CommunityData(self.community),
+                   UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+                   ContextData(),
+                   ObjectType(ObjectIdentity(self.swarcoUTCTrafftechPhaseStatus), )
+               )
+        for oid, val in varBinds:
+            val = val.prettyPrint()
+            if val.isdigit:
+                print(f'return {self.ip_adress}')
+                return self.get_val_stage_STCIP_swarco.get(val)
+        print(f'return {self.ip_adress}')
+        return 'DDDD'
 
-        return val.prettyPrint()
-
-
-    def get_plan(self):
-        """  Возвращает номер текущего плана """
-
-        oid = self.swarcoUTCTrafftechPlanCurrent
-        bad_oid = ['\n']
-
-        for i in range(4):
-            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
-            val = proc.readline().rstrip().replace(" ", '').replace('.', '')
-            if 'Timeout' not in val and val != bad_oid:
+    async def get_plan(self):
+        print(f'async get_plan')
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+                   SnmpEngine(),
+                   CommunityData(self.community),
+                   UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+                   ContextData(),
+                   ObjectType(ObjectIdentity(self.swarcoUTCTrafftechPlanCurrent), )
+               )
+        for oid, val in varBinds:
+            val = val.prettyPrint()
+            if val.isdigit:
                 return val
-            elif i == 3:
-                return 'None'
-            elif 'Timeout' in val:
-                continue
 
-    def get_plan_source(self):
-        """
-        Возвращает источник плана:
-
-        PlanSource (INTEGER)
-        trafficActuatedPlanSelectionCommand(1),
-        currentTrafficSituationCentral(2),
-        controlBlockOrInput(3),
-        manuallyFromWorkstation(4),
-        emergencyRoute(5),
-        currentTrafficSituation(6),
-        calendarClock(7),
-        controlBlockInLocal(8),
-        forcedByParameterBP40(9),
-        startUpPlan(10),
-        localPlan(11),
-        manualControlPlan(12)
-        """
-        """  Возвращает номер текущего плана """
-
-        oid = self.swarcoUTCTrafftechPlanSource
-        bad_oid = ['\n']
-
-        for i in range(4):
-            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
-            val = proc.readline().rstrip().replace(" ", '').replace('.', '')
-            if 'Timeout' not in val and val != bad_oid:
+    async def get_plan_source(self):
+        print(f'async get_plan_source')
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+                   SnmpEngine(),
+                   CommunityData(self.community),
+                   UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+                   ContextData(),
+                   ObjectType(ObjectIdentity(self.swarcoUTCTrafftechPlanSource), )
+               )
+        for oid, val in varBinds:
+            val = val.prettyPrint()
+            if val.isdigit:
                 return val
-            elif i == 3:
-                return 'None'
-            elif 'Timeout' in val:
-                continue
+
+    # def get_plan(self):
+    #     """  Возвращает номер текущего плана """
+    #
+    #     oid = self.swarcoUTCTrafftechPlanCurrent
+    #     bad_oid = ['\n']
+    #
+    #     for i in range(4):
+    #         proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+    #         val = proc.readline().rstrip().replace(" ", '').replace('.', '')
+    #         if 'Timeout' not in val and val != bad_oid:
+    #             return val
+    #         elif i == 3:
+    #             return 'None'
+    #         elif 'Timeout' in val:
+    #             continue
+
+    # def get_plan_source(self):
+    #     """
+    #     Возвращает источник плана:
+    #
+    #     PlanSource (INTEGER)
+    #     trafficActuatedPlanSelectionCommand(1),
+    #     currentTrafficSituationCentral(2),
+    #     controlBlockOrInput(3),
+    #     manuallyFromWorkstation(4),
+    #     emergencyRoute(5),
+    #     currentTrafficSituation(6),
+    #     calendarClock(7),
+    #     controlBlockInLocal(8),
+    #     forcedByParameterBP40(9),
+    #     startUpPlan(10),
+    #     localPlan(11),
+    #     manualControlPlan(12)
+    #     """
+    #     """  Возвращает номер текущего плана """
+    #
+    #     oid = self.swarcoUTCTrafftechPlanSource
+    #     bad_oid = ['\n']
+    #
+    #     for i in range(4):
+    #         proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
+    #         val = proc.readline().rstrip().replace(" ", '').replace('.', '')
+    #         if 'Timeout' not in val and val != bad_oid:
+    #             return val
+    #         elif i == 3:
+    #             return 'None'
+    #         elif 'Timeout' in val:
+    #             continue
 
     def get_status(self):
         """Возвращает значение "swarcoUTCStatusEquipment" (INTEGER):
@@ -251,40 +278,46 @@ class Swarco(AllProtocols):
             elif 'Timeout' in val:
                 continue
 
-    def get_softinputs(self):
+    async def get_softinputs(self):
         """
             Возвращает текущее состояние софт входов
         """
-        oid = self.swarcoSoftIOStatus
-        bad_oid = ['\n']
 
-        for i in range(4):
-            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
-            val = proc.readline().rstrip().replace(" ", '').replace('.', '')
-            if 'Timeout' not in val and val != bad_oid:
+        print(f'async get_softinputs для {self.ip_adress}')
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+                   SnmpEngine(),
+                   CommunityData(self.community),
+                   UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+                   ContextData(),
+                   ObjectType(ObjectIdentity(self.swarcoSoftIOStatus), )
+               )
+        for oid, val in varBinds:
+            val = val.prettyPrint()
+            if val.isdigit:
+                print(f'return {self.ip_adress}')
                 return val
-            elif i == 3:
-                return 'None'
-            elif 'Timeout' in val:
-                continue
+        print(f'return {self.ip_adress}')
+        return 'DDDD'
 
-    def get_sum_det(self):
+    async def get_sum_det(self):
         """
             Возвращает количество дет логик
          """
 
-        oid = self.swarcoUTCDetectorQty
-        bad_oid = ['\n']
-
-        for i in range(4):
-            proc = os.popen(f'{self.snmp_get} -q -r:{self.ip_adress} -v:2c -t:1 -c:{self.community} -o:{oid}')
-            val = proc.readline().rstrip().replace(" ", '').replace('.', '')
-            if 'Timeout' not in val and val != bad_oid:
-                return str(val)
-            elif i == 3:
-                return 'None'
-            elif 'Timeout' in val:
-                continue
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+                   SnmpEngine(),
+                   CommunityData(self.community),
+                   UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+                   ContextData(),
+                   ObjectType(ObjectIdentity(self.swarcoUTCDetectorQty), )
+               )
+        for oid, val in varBinds:
+            val = val.prettyPrint()
+            if val.isdigit:
+                print(f'return {self.ip_adress}')
+                return val
+        print(f'return {self.ip_adress}')
+        return 'DDDD'
 
     def get_mode(self):
         """
@@ -310,6 +343,28 @@ class Swarco(AllProtocols):
         elif softinp181 == '0' and sum_det_logic.isdigit() and int(sum_det_logic) > 2:
             return '8'
 
+    async def get_test(self):
+        """
+            Возвращает количество дет логик
+         """
+
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+                   SnmpEngine(),
+                   CommunityData(self.community),
+                   UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+                   ContextData(),
+                   ObjectType(ObjectIdentity(self.swarcoUTCDetectorQty)),
+                   ObjectType(ObjectIdentity(self.swarcoUTCTrafftechPhaseStatus)),
+                   ObjectType(ObjectIdentity(self.swarcoUTCTrafftechPlanCurrent)),
+               )
+        for oid, val in varBinds:
+            print(f'oid: {oid.prettyPrint()}, val: {val.prettyPrint()}')
+        #     val = val.prettyPrint()
+        #     if val.isdigit:
+        #         print(f'return {self.ip_adress}')
+        #         return val
+        # print(f'return {self.ip_adress}')
+        # return 'DDDD'
 
 
     """ SET REQUEST """
