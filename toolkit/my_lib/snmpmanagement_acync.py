@@ -4,6 +4,7 @@ import socket
 import subprocess
 import sys
 
+import aiohttp
 import requests
 
 from pysnmp.hlapi.asyncio import *
@@ -319,6 +320,21 @@ class Swarco(AllProtocols):
         print(f'return {self.ip_adress}')
         return 'DDDD'
 
+    async def get_multiple(self, oids):
+        print(f'get_multiple для {self.ip_adress}')
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+            SnmpEngine(),
+            CommunityData(self.community),
+            UdpTransportTarget((self.ip_adress, 161), timeout=self.timeout, retries=self.retries),
+            ContextData(),
+            *oids
+        )
+        # for oid, val in varBinds:
+        #     print(f'oid = {oid.prettyPrint()}, val = {val.prettyPrint()}')
+        print(f'Перед return для {self.ip_adress}')
+        return varBinds
+
+
     def get_mode(self):
         """
             Возвращает текущий режим ДК
@@ -365,6 +381,19 @@ class Swarco(AllProtocols):
         #         return val
         # print(f'return {self.ip_adress}')
         # return 'DDDD'
+
+    async def get_test2(self):
+        url = 'http://10.45.154.19'
+        # for attempt in range(4):
+        print('staRRt')
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=4) as resp:
+                    print(resp.status)
+        except Exception as e:
+            print(f'e: {e}')
+
+
 
 
     """ SET REQUEST """

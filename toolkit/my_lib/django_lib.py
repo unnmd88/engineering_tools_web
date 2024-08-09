@@ -4,3 +4,4 @@ class ProcessingDataFromRequest:
         self.request = request
         print(self.request.GET)
 
+data

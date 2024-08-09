@@ -1,6 +1,8 @@
 import json
 import os
 from datetime import datetime as dt
+import time
+import asyncio
 from io import StringIO, BytesIO
 
 from pathlib import Path
@@ -15,8 +17,7 @@ from django.template.loader import render_to_string
 from engineering_tools.settings import MEDIA_ROOT, MEDIA_URL, BASE_DIR
 from toolkit.forms_app import CreateConflictForm
 from toolkit.models import TrafficLightObjects, SaveConfigFiles, SaveConflictsTXT
-from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts, toolkit_lib
-
+from toolkit.my_lib import sdp_func_lib, snmpmanagement_v2, conflicts, toolkit_lib, snmp_managemement_v3
 
 
 def reverse_slashes(path):
@@ -168,57 +169,14 @@ def get_snmp_ajax(request, num_host):
     get_dict = request.GET.dict()
     print(f'get_dict: {get_dict}')
 
-    # for item in get_dict:
-    #     print(f'tem: {item}')
-    #     n_host, data = item.split(':', 1)
-    #     ip_adress, protocol, scn, *rest = data.split(';')
-    #     print(f'n_host: {n_host}')
-    #     print(f'data: {data}')
-    #     print(f'ip_adress: {ip_adress}')
-    #     print(f'protocol: {protocol}')
-    #     print(f'scn: {scn}')
-
     if request.GET:
-        json_data = {}
-        for num_host, data in get_dict.items():
-            print(f'num_host: {num_host}')
-            data = data.split(';')
-            if len(data) != 3:
-                continue
-            ip_adress, protocol, scn = data
-            print(f'ip_adress: {ip_adress}')
-            print(f'protocol: {protocol}')
-            print(f'scn: {scn}')
-
-            host = make_obj_snmp(protocol, ip_adress, scn)
-            host_data = toolkit_lib.make_json_to_front(host, protocol)
-            # host_data = host.make_json_to_front(host, protocol)
-            json_data[num_host] = host_data
-            print(f'json_data: {json_data}')
-
-
+        raw_data = asyncio.run(main(get_dict))
+        processed_data = snmp_managemement_v3.processing_data_toolkit(raw_data)
     else:
         print('nnnnnooo')
         return HttpResponse(json.dumps('Error: Failed to get data'), content_type='text/html')
 
-    # if len(ip_adress) < 10 or protocol not in protocols:
-    #     return HttpResponse(json.dumps('Error: Failed to get data'), content_type='text/html')
-
-    # json_data = {
-    #     '1': 'Фаза=1; План=1; Режим=Тест1',
-    #     '2': 'Фаза=2; План=2; Режим=Тест2',
-    #     '3': 'Фаза=3; План=3; Режим=Тест3',
-    #
-    # }
-    return HttpResponse(json.dumps(json_data, ensure_ascii=False), content_type='text/html')
-
-
-
-
-
-    print(f'json_data: {json_data}')
-
-    return HttpResponse(json.dumps(json_data, ensure_ascii=False), content_type='text/html')
+    return HttpResponse(json.dumps(processed_data, ensure_ascii=False), content_type='text/html')
 
 
 def set_snmp_ajax(request):
@@ -481,3 +439,24 @@ def make_obj_snmp(protocol, ip_adress, scn=None):
 
     return obj
 
+
+async def main(inner_data):
+
+
+    protocols = ('Поток_UG405', 'Поток_STCIP', 'Swarco_STCIP', 'Peek_UG405')
+    tasks = []
+    for num_host, data in inner_data.items():
+        data = data.split(';')
+        if len(data) != 3:
+            continue
+        ip_adress, protocol, scn = data
+        if protocol != protocols[3]:
+            oids, community = snmp_managemement_v3.create_oids(protocol, scn)
+            tasks.append(
+                snmp_managemement_v3.get_data_for_toolkit_snmp(ip_adress, community, num_host, protocol, oids))
+        else:
+            tasks.append(snmp_managemement_v3.get_data_for_toolkit_http_peek(ip_adress, num_host))
+    start_time = time.time()
+    result = await asyncio.gather(*tasks)
+    print(f'Время выполнения: {time.time() - start_time}')
+    return result

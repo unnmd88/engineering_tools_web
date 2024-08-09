@@ -103,25 +103,34 @@ const show_hide_hosts_snmp = function () {
 $(`#table_1`).show();
 
 let interval = 4000;
-const intervalID = setInterval(sendReqGetData, interval);
-
-
+let intervalID_get_data = setInterval(sendReqGetData, interval);
 
 function collect_data_from_hosts (){
     let num_visible_hosts = $(`#visible_hosts`).val();
     let data = {};
-    for(let num_host = 1; num_host <= num_visible_hosts; num_host++) {   
-        if ($(`#getdatahost_${num_host}`).is(':checked')){
-            data[num_host] = `${$('#ip_' + num_host).val()};${$(`#protocol_${num_host} option:selected`).text()};${$(`#scn_${num_host}`).val()}`;
+    let num_checked_checkbox = $('.receive_data:checked').length;
+    console.log(`num_checked_checkbox из collect data ${num_checked_checkbox}`)
+    if (num_checked_checkbox > 0) {
+        for(let num_host = 1, all_hosts = 0; num_host <= num_visible_hosts; num_host++) {   
+            if ($(`#getdatahost_${num_host}`).is(':checked')){
+                data[num_host] = `${$('#ip_' + num_host).val()};${$(`#protocol_${num_host} option:selected`).text()};${$(`#scn_${num_host}`).val()}`;
+                data.num_hosts_in_request = ++all_hosts;
+            }           
         }
-         }
+    }
          console.log(data);
     return data;
     }
 
-
-
 function sendReqGetData () {
+    let num_checked_checkbox = $('input:checkbox.receive_data:checked').length;
+
+    console.log(`num_checked_checkbox = ${num_checked_checkbox}`);
+    
+    if (num_checked_checkbox === 0) {
+        console.log(`num_checked_checkbox === 0`);
+        return false;
+    }       
 
     console.log('sendReqGetData');
     $.ajax({
@@ -140,7 +149,7 @@ function sendReqGetData () {
     $.each(postStringify, function(num_host, write_data) {
         $(`#datahost_${num_host}`).text(write_data);
     });
-                                    
+
     // $(`#datahost_${num_host}`).text(data);
     // document.getElementById(`datahost_${num_host}`).textContent=data;
     if (data == 'yes'){
